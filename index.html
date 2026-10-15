@@ -325,6 +325,24 @@
       .mob-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 90; }
       .mob-overlay.show { display: block; }
     }
+
+    @media (max-width: 640px) {
+      .topbar { padding: 0 16px; height: 60px; }
+      .topbar-left h1 { font-size: 16px; }
+      .content { padding: 16px 14px; }
+      .greeting h1 { font-size: 19px; }
+      .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+      .projects-grid { grid-template-columns: 1fr; gap: 14px; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .search-input { min-width: 100%; }
+      .select-filter { width: 100%; }
+      .form-row { grid-template-columns: 1fr; gap: 12px; }
+      .modal-overlay { padding: 10px; }
+      .modal-head { padding: 16px; }
+      .modal-body { padding: 16px; }
+      .modal-footer { padding: 14px 16px; }
+      .pricing-box { flex-direction: column; align-items: flex-start; gap: 8px; }
+    }
   </style>
 </head>
 <body>
