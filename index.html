@@ -997,6 +997,15 @@ function projectCardHtml(p, isCommercialView = false) {
 
   const statusBadge = `<span class="badge b-${esc(p.status)}">${STATUS_LABELS[p.status] || p.status}</span>`;
 
+  /* Todo lo que llega aquí ya fue habilitado por ADG para Comercial
+     (GET /projects lo filtra en el backend) — el color del ícono es
+     lo que de verdad ayuda a priorizar: en rojo mientras Comercial lo
+     está mostrando como "pendiente de precio" (urge fijarlo), en
+     verde una vez que ya se valorizó. */
+  const comercialBadge = hasPrice
+    ? `<span class="badge" style="background:rgba(16,185,129,.14);color:var(--success)" title="Ya valorizado — Comercial lo muestra con precio final"><svg class="icon" style="width:11px;height:11px"><use href="#icon-shopping-cart"></use></svg> Para Comercial</span>`
+    : `<span class="badge" style="background:rgba(239,68,68,.12);color:#dc2626" title="ADG lo habilitó para Comercial y lo está mostrando en rojo hasta que OPP fije el precio — priorízalo"><svg class="icon" style="width:11px;height:11px"><use href="#icon-shopping-cart"></use></svg> Para Comercial</span>`;
+
   let priceHtml = '';
   if (p.commercial_offer_type === 'alquiler') {
     priceHtml = `
@@ -1041,7 +1050,7 @@ function projectCardHtml(p, isCommercialView = false) {
     <div class="project-card">
       <div class="project-card-top">
         <span class="project-code">${esc(p.code)}</span>
-        <div style="display:flex;gap:6px">${statusBadge} ${offerBadge}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${comercialBadge} ${statusBadge} ${offerBadge}</div>
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         ${logoHtml}
