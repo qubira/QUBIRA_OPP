@@ -385,7 +385,7 @@
       </div>
       <div class="nav-item" data-page="catalogo-comercial" onclick="navigate('catalogo-comercial')">
         <svg viewBox="0 0 24 24"><use href="#icon-shopping-cart"></use></svg>
-        Para Comercial
+        Para ODN
         <span class="nav-badge" id="badge-commercial" style="background:#0ea5e9">0</span>
       </div>
 
@@ -462,7 +462,7 @@
             <div class="stat-icon green"><svg viewBox="0 0 24 24"><use href="#icon-shopping-cart"></use></svg></div>
             <div class="stat-info">
               <div class="num" id="stat-commercial">0</div>
-              <div class="label">Publicados en Comercial</div>
+              <div class="label">Publicados en ODN</div>
             </div>
           </div>
           <div class="stat-card">
@@ -533,9 +533,9 @@
           <div class="card-header">
             <div class="card-title">
               <svg viewBox="0 0 24 24"><use href="#icon-shopping-cart"></use></svg>
-              Productos con Precios Fijados para el Área Comercial
+              Productos con Precios Fijados para ODN
             </div>
-            <span style="font-size:12px;color:var(--text-muted)">Estos son los precios que el equipo Comercial utiliza para cotizaciones y contratos</span>
+            <span style="font-size:12px;color:var(--text-muted)">Estos son los precios que la Oficina de Desarrollo de Negocios (ODN) utiliza para cotizaciones y contratos</span>
           </div>
 
           <div class="filter-bar">
@@ -773,14 +773,14 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Directrices y Lineamientos para Comercial <span>(opcional)</span></label>
+          <label class="form-label">Directrices y Lineamientos para ODN <span>(opcional)</span></label>
           <textarea class="form-textarea" id="form-notes" rows="2" placeholder="Ej: Autorizado descuento de hasta 8% por pronto pago. Incluye 3 meses de soporte técnico gratuito."></textarea>
         </div>
 
         <div class="switch-wrap">
           <div class="switch-info">
-            <strong>Visible en el Catálogo de Comercial</strong>
-            <span>ADG ya habilitó este proyecto para Comercial — esa decisión es suya, no de OPP. Mientras no fijes un precio aquí, Comercial lo verá marcado como pendiente de precio.</span>
+            <strong>Visible en el Catálogo de ODN</strong>
+            <span>ADG ya habilitó este proyecto para ODN — esa decisión es suya, no de OPP. Mientras no fijes un precio aquí, ODN lo verá marcado como pendiente de precio.</span>
           </div>
           <svg class="icon" style="color:var(--success);width:22px;height:22px;flex-shrink:0"><use href="#icon-check-circle"></use></svg>
         </div>
@@ -928,7 +928,7 @@ async function renderDashboardAgenda() {
 const PAGE_TITLES = {
   'dashboard': { title: 'Dashboard Financiero', sub: 'Métricas clave de presupuestos y valorización de proyectos' },
   'por-valorizar': { title: 'Proyectos por Valorizar', sub: 'Bandeja de proyectos aprobados por ADG que requieren precios' },
-  'catalogo-comercial': { title: 'Catálogo para Comercial', sub: 'Productos con precios y condiciones asignadas para Comercial' },
+  'catalogo-comercial': { title: 'Catálogo para ODN', sub: 'Productos con precios y condiciones asignadas para ODN (Oficina de Desarrollo de Negocios)' },
   'calculadora': { title: 'Simulador Financiero', sub: 'Calculadora de precios, márgenes de ganancia y amortización' },
   'calendario': { title: 'Calendario Corporativo', sub: 'Agenda de comités de presupuestos y reuniones corporativas' },
 };
@@ -1011,8 +1011,8 @@ function projectCardHtml(p, isCommercialView = false) {
      está mostrando como "pendiente de precio" (urge fijarlo), en
      verde una vez que ya se valorizó. */
   const comercialBadge = hasPrice
-    ? `<span class="badge" style="background:rgba(16,185,129,.14);color:var(--success)" title="Ya valorizado — Comercial lo muestra con precio final"><svg class="icon" style="width:11px;height:11px"><use href="#icon-shopping-cart"></use></svg> Para Comercial</span>`
-    : `<span class="badge" style="background:rgba(239,68,68,.12);color:#dc2626" title="ADG lo habilitó para Comercial y lo está mostrando en rojo hasta que OPP fije el precio — priorízalo"><svg class="icon" style="width:11px;height:11px"><use href="#icon-shopping-cart"></use></svg> Para Comercial</span>`;
+    ? `<span class="badge" style="background:rgba(16,185,129,.14);color:var(--success)" title="Ya valorizado — ODN lo muestra con precio final"><svg class="icon" style="width:11px;height:11px"><use href="#icon-shopping-cart"></use></svg> Para ODN</span>`
+    : `<span class="badge" style="background:rgba(239,68,68,.12);color:#dc2626" title="ADG lo habilitó para ODN y lo está mostrando en rojo hasta que OPP fije el precio — priorízalo"><svg class="icon" style="width:11px;height:11px"><use href="#icon-shopping-cart"></use></svg> Para ODN</span>`;
 
   let priceHtml = '';
   if (p.commercial_offer_type === 'alquiler') {
