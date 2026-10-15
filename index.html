@@ -136,6 +136,14 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
     /* ── STATS GRID ── */
+    .greeting h1 { font-size: 23px; font-weight: 800; letter-spacing: -.01em; color: var(--text); }
+    .greeting p { color: var(--text-muted); font-size: 13px; margin-top: 3px; }
+    .agenda-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; transition: background .15s; cursor: pointer; }
+    .agenda-item:hover { background: var(--bg-card2); }
+    .agenda-item + .agenda-item { margin-top: 2px; }
+    .agenda-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .agenda-title { font-size: 13px; font-weight: 600; line-height: 1.3; color: var(--text); }
+    .agenda-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin-bottom: 26px; }
     .stat-card {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px;
@@ -430,6 +438,10 @@
 
       <!-- ── PAGE 1: DASHBOARD ── -->
       <section class="page active" id="page-dashboard">
+        <div class="greeting" style="margin-bottom:22px">
+          <h1 id="greeting-title">Bienvenido 👋</h1>
+          <p id="greeting-date"></p>
+        </div>
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon"><svg viewBox="0 0 24 24"><use href="#icon-folder"></use></svg></div>
@@ -461,16 +473,28 @@
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <svg viewBox="0 0 24 24"><use href="#icon-activity"></use></svg>
-              Proyectos Recientes de ADG para Revisión de Precios
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start">
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><use href="#icon-activity"></use></svg>
+                Proyectos Recientes de ADG para Revisión de Precios
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="navigate('por-valorizar')">Ver todos los pendientes →</button>
             </div>
-            <button class="btn btn-primary btn-sm" onclick="navigate('por-valorizar')">Ver todos los pendientes →</button>
+            <div id="dashboard-recent-projects" class="projects-grid">
+              <p style="color:var(--text-muted);font-size:13px">Cargando proyectos…</p>
+            </div>
           </div>
-          <div id="dashboard-recent-projects" class="projects-grid">
-            <p style="color:var(--text-muted);font-size:13px">Cargando proyectos…</p>
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><use href="#icon-calendar"></use></svg>
+                Próximas reuniones
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="navigate('calendario')">Ver calendario</button>
+            </div>
+            <div id="dashboard-agenda"></div>
           </div>
         </div>
       </section>
@@ -754,10 +778,10 @@
 
         <div class="switch-wrap">
           <div class="switch-info">
-            <strong>Habilitar para el Área Comercial</strong>
-            <span>Si está activo, el producto aparecerá inmediatamente en el Catálogo de Comercial.</span>
+            <strong>Visible en el Catálogo de Comercial</strong>
+            <span>ADG ya habilitó este proyecto para Comercial — esa decisión es suya, no de OPP. Mientras no fijes un precio aquí, Comercial lo verá marcado como pendiente de precio.</span>
           </div>
-          <input type="checkbox" class="switch-input" id="form-show-comercial">
+          <svg class="icon" style="color:var(--success);width:22px;height:22px;flex-shrink:0"><use href="#icon-check-circle"></use></svg>
         </div>
       </div>
       <div class="modal-footer">
@@ -779,6 +803,9 @@ const QOPP_API_BASE = (location.hostname === 'localhost' || location.hostname ==
 const CENTRAL_MODULO_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
   ? 'http://localhost:5515/modulo.html'
   : 'https://qubira-login.vercel.app/modulo.html';
+const QOPP_ALERT_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:5515/session-alert.html'
+  : 'https://qubira-login.vercel.app/session-alert.html';
 
 let token = localStorage.getItem('qopp_token');
 let user  = JSON.parse(localStorage.getItem('qopp_user') || 'null');
@@ -786,16 +813,34 @@ let user  = JSON.parse(localStorage.getItem('qopp_user') || 'null');
 if (!token) { window.location.href = 'login.html'; }
 document.getElementById('btn-change-module').href = CENTRAL_MODULO_URL;
 
+function goToLogin(next) {
+  window.location.href = 'login.html' + (next ? ('?next=' + encodeURIComponent(next)) : '');
+}
+
+function oppClearSession() {
+  token = null;
+  user  = null;
+  localStorage.removeItem('qopp_token');
+  localStorage.removeItem('qopp_user');
+}
+
 async function oppFetch(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
   if (token) headers.Authorization = 'Bearer ' + token;
   const res = await fetch(QOPP_API_BASE + path, { ...opts, headers });
+
   if (res.status === 401) {
-    localStorage.removeItem('qopp_token');
-    localStorage.removeItem('qopp_user');
-    window.location.href = 'login.html';
-    throw new Error('Sesión vencida');
+    const data401 = await res.json().catch(() => ({}));
+    const cachedUsername = user?.username;
+    oppClearSession();
+    if (data401?.code === 'SESSION_REPLACED') {
+      window.location.href = `${QOPP_ALERT_URL}?username=${encodeURIComponent(cachedUsername || '')}&ip=${encodeURIComponent(data401.ip || '')}`;
+    } else {
+      goToLogin();
+    }
+    throw new Error('SESSION_EXPIRED');
   }
+
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Error en petición');
   return data;
@@ -814,9 +859,9 @@ function toast(type, title, msg) {
   setTimeout(() => d.remove(), 4200);
 }
 
-function logout() {
-  localStorage.removeItem('qopp_token');
-  localStorage.removeItem('qopp_user');
+async function logout() {
+  try { await oppFetch('/api/auth/logout', { method: 'POST' }); } catch (err) { /* ya estaba vencido, igual cerramos local */ }
+  oppClearSession();
   window.location.href = 'login.html';
 }
 
@@ -827,6 +872,48 @@ function renderSession() {
   document.getElementById('sf-name').textContent = name;
   document.getElementById('sf-avatar').textContent = init;
   document.getElementById('sf-role').textContent = user.cargo ? `${user.cargo} · OPP` : 'Oficina de Presupuestos';
+}
+
+const GREETING_DAY = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const GREETING_MONTH = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function renderGreeting() {
+  const nombre = user?.nombre || user?.username || '';
+  document.getElementById('greeting-title').textContent = `Bienvenido${nombre ? ', ' + nombre : ''} 👋`;
+  const now = new Date();
+  const dayName = GREETING_DAY[now.getDay()];
+  document.getElementById('greeting-date').textContent = `${dayName[0].toUpperCase()}${dayName.slice(1)}, ${now.getDate()} de ${GREETING_MONTH[now.getMonth()]} de ${now.getFullYear()}`;
+}
+
+const AGENDA_DAY_COLORS = ['#0284c7','#f59e0b','#10b981','#8b5cf6','#f43f5e','#64748b'];
+
+async function renderDashboardAgenda() {
+  const el = document.getElementById('dashboard-agenda');
+  el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">Cargando…</div>`;
+  try {
+    const today = new Date();
+    const to = new Date(today); to.setDate(to.getDate() + 13);
+    const params = new URLSearchParams({ mine: 'true', date_from: calIsoDate(today), date_to: calIsoDate(to) });
+    const meetings = (await oppFetch('/api/calendar/meetings?' + params.toString()))
+      .filter(m => m.status !== 'cancelled')
+      .sort((a, b) => (a.meeting_date + a.start_time).localeCompare(b.meeting_date + b.start_time))
+      .slice(0, 6);
+    if (!meetings.length) {
+      el.innerHTML = `<div class="empty-state" style="padding:30px 20px"><svg class="icon" style="width:28px;height:28px;opacity:.4"><use href="#icon-calendar"></use></svg><div style="font-size:13px;margin-top:10px">No tienes reuniones en los próximos días</div></div>`;
+      return;
+    }
+    el.innerHTML = meetings.map((m, i) => `
+      <div class="agenda-item" onclick="navigate('calendario')">
+        <div class="agenda-dot" style="background:${AGENDA_DAY_COLORS[i % AGENDA_DAY_COLORS.length]}"></div>
+        <div style="flex:1;min-width:0">
+          <div class="agenda-title">${esc(m.title)}</div>
+          <div class="agenda-meta">${calFmtDate(m.meeting_date)} · ${m.start_time.slice(0,5)}${m.meeting_type ? ' · ' + esc(m.meeting_type) : ''}</div>
+          <div style="margin-top:4px">${calModalityIconHtml(m, 11)}</div>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No se pudo cargar la agenda</div>`;
+  }
 }
 
 // ── NAVEGACIÓN ──
@@ -946,7 +1033,6 @@ function projectCardHtml(p, isCommercialView = false) {
     `;
   }
 
-  const isPub = (p.show_to_comercial === true);
   const logoHtml = p.company_logo
     ? `<img class="project-logo" src="${esc(p.company_logo)}" alt="">`
     : `<div class="project-logo-ph"><svg class="icon" style="width:18px;height:18px"><use href="#icon-image"></use></svg></div>`;
@@ -977,8 +1063,8 @@ function projectCardHtml(p, isCommercialView = false) {
 
       <div class="project-card-footer">
         <div class="commercial-status">
-          <span class="${isPub ? 'dot-published' : 'dot-draft'}"></span>
-          <span>${isPub ? 'En Comercial' : 'Sin publicar'}</span>
+          <span class="${hasPrice ? 'dot-published' : 'dot-draft'}"></span>
+          <span>${hasPrice ? 'Precio fijado' : 'Pendiente de precio'}</span>
         </div>
         <button class="btn btn-outline btn-sm" onclick="openPricingModal('${esc(p.id)}')">
           <svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><use href="#icon-edit-2"></use></svg>
@@ -1015,10 +1101,11 @@ function filterPendingProjects() {
   const adgStatus = document.getElementById('filter-adg-status')?.value || 'all';
 
   const filtered = allProjects.filter(p => {
-    // Por valorizar: no tiene precio aún o no está publicado en comercial
+    // Por valorizar: todavía no tiene ni precio de venta ni de alquiler
+    const hasPrice = (p.commercial_price != null || p.rental_price != null);
     const matchesQ = !q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q) || (p.client && p.client.toLowerCase().includes(q));
     const matchesStatus = adgStatus === 'all' || p.status === adgStatus;
-    return matchesQ && matchesStatus;
+    return !hasPrice && matchesQ && matchesStatus;
   });
 
   const container = document.getElementById('grid-pending-projects');
@@ -1073,7 +1160,6 @@ function openPricingModal(projectId) {
   document.getElementById('form-rent-price').value = p.rental_price || '';
   document.getElementById('form-rent-min').value = p.rental_price_min || '';
   document.getElementById('form-notes').value = p.commercial_notes || '';
-  document.getElementById('form-show-comercial').checked = (p.show_to_comercial === true);
 
   updatePricingFormFields();
   calculateModalMargins();
@@ -1157,7 +1243,6 @@ async function saveProjectPricing() {
       rental_price: document.getElementById('form-rent-price').value || null,
       rental_price_min: document.getElementById('form-rent-min').value || null,
       commercial_notes: document.getElementById('form-notes').value || null,
-      show_to_comercial: document.getElementById('form-show-comercial').checked,
     };
 
     // Calcular margen y ROI para guardar en base de datos
@@ -1912,10 +1997,80 @@ function calViewMeeting(id) {
 // ── INICIALIZACIÓN ──
 (async function init() {
   renderSession();
+  renderGreeting();
   await loadStats();
   await loadProjects();
   runSimulation();
+  renderDashboardAgenda();
 })();
+
+// ─── Cierre de sesión por inactividad + detección de sesión reemplazada ──────
+/* Basado en Date.now() y un solo "tick" cada 1s (no en cadenas de
+   setTimeout) para que funcione igual aunque el navegador retrase los
+   timers de una pestaña en segundo plano — al volver a mirarla (o en
+   el próximo tick, atrasado o no) el cálculo de tiempo real transcurrido
+   sigue siendo correcto. Además hace un "heartbeat" periódico contra el
+   servidor: si esta cuenta inició sesión en otro dispositivo, el
+   servidor invalida esta sesión y lo detecta acá aunque no haya pasado
+   ninguna inactividad, mostrando un aviso en vez de un cierre mudo. */
+(function setupSessionGuard(onLogout) {
+  const WARN_AFTER_MS = 90 * 1000;
+  const LOGOUT_AFTER_MS = 120 * 1000;
+  const HEARTBEAT_MS = 20 * 1000;
+
+  let lastActivity = Date.now();
+  let overlay = null;
+  let countdownInterval = null;
+  let lastHeartbeatAt = 0;
+
+  function hideWarning() { if (overlay) { overlay.remove(); overlay = null; } clearInterval(countdownInterval); }
+
+  function showWarning() {
+    if (overlay) return;
+    let secondsLeft = Math.round((LOGOUT_AFTER_MS - WARN_AFTER_MS) / 1000);
+    overlay = document.createElement('div');
+    overlay.id = 'inactivity-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(17,24,39,.6);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:inherit';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:16px;padding:28px;max-width:340px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.25)">
+        <div style="width:48px;height:48px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px">⏱</div>
+        <h3 style="font-size:16px;font-weight:800;margin:0 0 8px;color:#111827">¿Sigues ahí?</h3>
+        <p style="font-size:13px;color:#6b7280;margin:0 0 18px;line-height:1.5">Tu sesión se cerrará por inactividad en <strong id="inactivity-countdown">${secondsLeft}</strong> segundos.</p>
+        <button id="inactivity-stay-btn" style="width:100%;padding:12px;border:none;border-radius:10px;background:#0284c7;color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">Seguir conectado</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('inactivity-stay-btn').addEventListener('click', () => { lastActivity = Date.now(); hideWarning(); });
+    countdownInterval = setInterval(() => {
+      secondsLeft -= 1;
+      const el = document.getElementById('inactivity-countdown');
+      if (el) el.textContent = String(Math.max(secondsLeft, 0));
+      if (secondsLeft <= 0) clearInterval(countdownInterval);
+    }, 1000);
+  }
+
+  function handleActivity() { lastActivity = Date.now(); hideWarning(); }
+  ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'].forEach(evt =>
+    document.addEventListener(evt, handleActivity, { passive: true }));
+
+  async function heartbeat() {
+    if (!localStorage.getItem('qopp_token')) return;
+    try { await oppFetch('/api/auth/me'); } catch (_) { /* ya lo maneja oppFetch */ }
+  }
+
+  function tick() {
+    if (!localStorage.getItem('qopp_token')) return;
+    const elapsed = Date.now() - lastActivity;
+    if (elapsed >= LOGOUT_AFTER_MS) { hideWarning(); onLogout(); return; }
+    if (elapsed >= WARN_AFTER_MS) showWarning();
+
+    const now = Date.now();
+    if (now - lastHeartbeatAt >= HEARTBEAT_MS) { lastHeartbeatAt = now; heartbeat(); }
+  }
+
+  setInterval(tick, 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  tick();
+})(logout);
 </script>
 </body>
 </html>
