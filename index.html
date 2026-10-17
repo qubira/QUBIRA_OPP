@@ -476,6 +476,10 @@
         <svg viewBox="0 0 24 24"><use href="#icon-calculator"></use></svg>
         Simulador de Precios
       </div>
+      <div class="nav-item" data-page="costo-herramientas" onclick="navigate('costo-herramientas')">
+        <svg viewBox="0 0 24 24"><use href="#icon-dollar-sign"></use></svg>
+        Costo por OPP HERRAMIENTAS
+      </div>
       <div class="nav-item" data-page="calendario" onclick="navigate('calendario')">
         <svg viewBox="0 0 24 24"><use href="#icon-calendar"></use></svg>
         Calendario
@@ -716,6 +720,46 @@
         </div>
       </section>
 
+      <!-- ── PAGE 4.5: COSTO POR HERRAMIENTAS ── -->
+      <section class="page" id="page-costo-herramientas">
+        <div class="card" style="margin-bottom:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+            <div>
+              <div class="card-title" style="margin-bottom:4px">
+                <svg viewBox="0 0 24 24"><use href="#icon-dollar-sign"></use></svg>
+                Costo por OPP HERRAMIENTAS
+              </div>
+              <p style="font-size:12.5px;color:var(--text-muted);margin:0">Lista reutilizable de lenguajes y herramientas con costos y márgenes de propuesta definidos para OPP.</p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="openTechCostModal()">
+              <svg class="icon"><use href="#icon-dollar-sign"></use></svg>
+              Herramientas Costo
+            </button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:20px">
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
+              <h3 style="font-size:15px;font-weight:700">Lenguajes</h3>
+              <span id="opp-tech-count-lang" style="font-size:12px;color:var(--text-muted)">—</span>
+            </div>
+            <div id="opp-tech-list-language" style="max-height:480px;overflow-y:auto">
+              <p style="font-size:12.5px;color:var(--text-muted)">Cargando…</p>
+            </div>
+          </div>
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
+              <h3 style="font-size:15px;font-weight:700">Herramientas</h3>
+              <span id="opp-tech-count-tool" style="font-size:12px;color:var(--text-muted)">—</span>
+            </div>
+            <div id="opp-tech-list-tool" style="max-height:480px;overflow-y:auto">
+              <p style="font-size:12.5px;color:var(--text-muted)">Cargando…</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ── PAGE 5: CALENDARIO CORPORATIVO ── -->
       <section class="page" id="page-calendario">
         <div style="position:sticky;top:0;z-index:20;background:var(--bg);padding-top:2px;padding-bottom:10px;margin:0 -2px;">
@@ -870,6 +914,25 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closePricingModal()">Cancelar</button>
         <button class="btn btn-primary" id="btn-save-pricing" onclick="saveProjectPricing()">Guardar Estructura de Precios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Herramientas Costo (lenguajes/herramientas del catálogo ADG) ── -->
+  <div class="modal-overlay" id="modal-tech-cost">
+    <div class="modal-content" style="max-width:960px">
+      <div class="modal-head">
+        <h3>Herramientas Costo</h3>
+        <button class="modal-close" onclick="closeTechCostModal()"><svg class="icon" style="width:18px;height:18px"><use href="#icon-x"></use></svg></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12.5px;color:var(--text-muted)">Costo de referencia y margen (S/) que se suma al costo para armar el rango de precio de propuesta. Los cambios se guardan automáticamente al salir de cada campo.</p>
+        <div id="tech-cost-body">
+          <p style="color:var(--text-muted);font-size:13px">Cargando…</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeTechCostModal()">Cerrar</button>
       </div>
     </div>
   </div>
@@ -1212,6 +1275,7 @@ const PAGE_TITLES = {
   'por-valorizar': { title: 'Proyectos por Valorizar', sub: 'Bandeja de proyectos aprobados por ADG que requieren precios' },
   'catalogo-comercial': { title: 'Catálogo para ODN', sub: 'Productos con precios y condiciones asignadas para ODN (Oficina de Desarrollo de Negocios)' },
   'calculadora': { title: 'Simulador Financiero', sub: 'Calculadora de precios, márgenes de ganancia y amortización' },
+  'costo-herramientas': { title: 'Costo por OPP HERRAMIENTAS', sub: 'Catálogo de lenguajes y herramientas con costos y márgenes de propuesta' },
   'calendario': { title: 'Calendario Corporativo', sub: 'Agenda de comités de presupuestos y reuniones corporativas' },
 };
 
@@ -1229,6 +1293,7 @@ function navigate(page) {
   document.getElementById('page-sub').textContent = meta.sub;
 
   if (page === 'calendario') calRender();
+  if (page === 'costo-herramientas') loadOppTechCatalog();
 
   if (window.innerWidth <= 900) closeSidebar();
 }
@@ -1469,6 +1534,165 @@ function openPricingModal(projectId) {
 function closePricingModal() {
   document.getElementById('modal-pricing').classList.remove('open');
   currentEditingProject = null;
+}
+
+// ── HERRAMIENTAS COSTO (costo + margen de propuesta por lenguaje/herramienta) ──
+let _techCatalogCache = { language: [], tool: [] };
+
+async function loadOppTechCatalog() {
+  const langEl = document.getElementById('opp-tech-list-language');
+  const toolEl = document.getElementById('opp-tech-list-tool');
+  if (!langEl || !toolEl) return;
+  try {
+    const rows = await oppFetch('/api/opp/tech-catalog');
+    _techCatalogCache = {
+      language: rows.filter(r => r.category === 'language'),
+      tool: rows.filter(r => r.category === 'tool'),
+    };
+    renderOppTechCatalogLists();
+  } catch (err) {
+    langEl.innerHTML = `<p style="font-size:12px;color:var(--danger)">${esc(err.message || 'Error al cargar')}</p>`;
+    toolEl.innerHTML = `<p style="font-size:12px;color:var(--danger)">${esc(err.message || 'Error al cargar')}</p>`;
+  }
+}
+
+function renderOppTechCatalogLists() {
+  const renderList = (items, targetId, countId) => {
+    const el = document.getElementById(targetId);
+    const cnt = document.getElementById(countId);
+    if (cnt) cnt.textContent = `${items.length} registrado${items.length === 1 ? '' : 's'}`;
+    if (!el) return;
+    if (!items.length) {
+      el.innerHTML = '<p style="font-size:12px;color:var(--text-muted);padding:12px 0;text-align:center">Sin registrar</p>';
+      return;
+    }
+    el.innerHTML = items.map(t => {
+      const avatar = t.image_url
+        ? `<img src="${esc(t.image_url)}" style="width:26px;height:26px;border-radius:6px;object-fit:cover;flex-shrink:0" alt="">`
+        : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-card2);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--primary);flex-shrink:0">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
+      const costBadge = t.costo != null && t.costo !== ''
+        ? `<span class="badge" style="background:rgba(16,185,129,.15);color:#10b981;font-size:11px">S/ ${Number(t.costo).toFixed(2)}</span>`
+        : '';
+      return `
+      <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+        ${avatar}
+        <span style="font-size:13.5px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.name)}</span>
+        ${costBadge}
+      </div>`;
+    }).join('');
+  };
+  renderList(_techCatalogCache.language, 'opp-tech-list-language', 'opp-tech-count-lang');
+  renderList(_techCatalogCache.tool, 'opp-tech-list-tool', 'opp-tech-count-tool');
+}
+
+async function openTechCostModal() {
+  document.getElementById('modal-tech-cost').classList.add('open');
+  const body = document.getElementById('tech-cost-body');
+  body.innerHTML = '<p style="color:var(--text-muted);font-size:13px">Cargando…</p>';
+  try {
+    const rows = await oppFetch('/api/opp/tech-catalog');
+    _techCatalogCache = {
+      language: rows.filter(r => r.category === 'language'),
+      tool: rows.filter(r => r.category === 'tool'),
+    };
+    renderTechCostBody();
+  } catch (err) {
+    body.innerHTML = `<p style="color:var(--danger);font-size:13px">${esc(err.message || 'Error al cargar')}</p>`;
+  }
+}
+
+function closeTechCostModal() {
+  document.getElementById('modal-tech-cost').classList.remove('open');
+  renderOppTechCatalogLists();
+}
+
+function fmtTechS(v) {
+  return v == null || v === '' ? '—' : `S/ ${Number(v).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function techPropuestaLabel(t) {
+  if (t.costo == null || t.costo === '') return '—';
+  const costo = Number(t.costo) || 0;
+  const min = costo + (Number(t.margen_min) || 0);
+  const max = costo + (Number(t.margen_max) || 0);
+  return `${fmtTechS(min)} – ${fmtTechS(max)}`;
+}
+
+function renderTechCostBody() {
+  const body = document.getElementById('tech-cost-body');
+  body.innerHTML = techCostSection('Lenguajes', 'language') + techCostSection('Herramientas', 'tool');
+  wireTechCostInputs();
+}
+
+function techCostSection(label, category) {
+  const items = _techCatalogCache[category] || [];
+  return `
+  <div style="margin-bottom:18px">
+    <h4 style="font-size:13.5px;font-weight:700;margin-bottom:8px">${label}</h4>
+    ${items.length === 0 ? '<p style="font-size:12px;color:var(--text-muted)">Sin registrar</p>' : `
+    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+        <thead>
+          <tr style="background:var(--bg-card2);color:var(--text-muted);text-transform:uppercase;font-size:10.5px">
+            <th style="text-align:left;padding:8px 10px" colspan="2">Herramienta</th>
+            <th style="text-align:left;padding:8px 10px">Costo (S/)</th>
+            <th style="text-align:left;padding:8px 10px">Margen mín (S/)</th>
+            <th style="text-align:left;padding:8px 10px">Margen máx (S/)</th>
+            <th style="text-align:left;padding:8px 10px">Propuesta (S/)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(t => techCostRow(t, category)).join('')}
+        </tbody>
+      </table>
+    </div>`}
+  </div>`;
+}
+
+function techCostRow(t, category) {
+  const avatar = t.image_url
+    ? `<img src="${esc(t.image_url)}" style="width:22px;height:22px;border-radius:5px;object-fit:cover" alt="">`
+    : `<span style="width:22px;height:22px;border-radius:5px;background:var(--bg-card2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary)">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
+  return `
+  <tr data-tc-row="${esc(t.id)}" data-category="${category}" style="border-top:1px solid var(--border)">
+    <td style="padding:7px 10px;width:30px">${avatar}</td>
+    <td style="padding:7px 10px;white-space:nowrap">${esc(t.name)}</td>
+    <td style="padding:7px 10px"><input type="number" step="0.01" min="0" class="form-input" style="padding:5px 8px;font-size:12px;width:90px" data-field="costo" value="${t.costo ?? ''}"></td>
+    <td style="padding:7px 10px"><input type="number" step="0.01" min="0" class="form-input" style="padding:5px 8px;font-size:12px;width:90px" data-field="margen_min" value="${t.margen_min ?? ''}"></td>
+    <td style="padding:7px 10px"><input type="number" step="0.01" min="0" class="form-input" style="padding:5px 8px;font-size:12px;width:90px" data-field="margen_max" value="${t.margen_max ?? ''}"></td>
+    <td style="padding:7px 10px;white-space:nowrap;color:var(--text-muted)" class="tc-propuesta">${techPropuestaLabel(t)}</td>
+  </tr>`;
+}
+
+function wireTechCostInputs() {
+  document.querySelectorAll('#tech-cost-body [data-tc-row]').forEach(row => {
+    const id = row.dataset.tcRow;
+    const category = row.dataset.category;
+    const propuestaEl = row.querySelector('.tc-propuesta');
+    const currentValues = () => ({
+      costo: row.querySelector('[data-field="costo"]').value,
+      margen_min: row.querySelector('[data-field="margen_min"]').value,
+      margen_max: row.querySelector('[data-field="margen_max"]').value,
+    });
+    row.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', () => { propuestaEl.textContent = techPropuestaLabel(currentValues()); });
+      inp.addEventListener('blur', () => saveTechCostRow(id, category, currentValues(), row));
+    });
+  });
+}
+
+async function saveTechCostRow(id, category, values, row) {
+  try {
+    await oppFetch(`/api/opp/tech-catalog/${id}/cost`, { method: 'PUT', body: JSON.stringify(values) });
+    const item = (_techCatalogCache[category] || []).find(x => x.id === id);
+    if (item) Object.assign(item, {
+      costo: values.costo === '' ? null : Number(values.costo),
+      margen_min: values.margen_min === '' ? null : Number(values.margen_min),
+      margen_max: values.margen_max === '' ? null : Number(values.margen_max),
+    });
+    row.style.background = 'rgba(16,185,129,.08)';
+    setTimeout(() => { row.style.background = ''; }, 700);
+  } catch (err) { toast('error', 'No se pudo guardar', err.message || 'Error al guardar el costo'); }
 }
 
 function updatePricingFormFields() {
