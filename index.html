@@ -1665,7 +1665,7 @@ function techPropuestaLabel(p) {
   const hasCost = p.costo !== null && p.costo !== '' && p.costo !== undefined;
   const hasMin = p.margen_min !== null && p.margen_min !== '' && p.margen_min !== undefined;
   const hasMax = p.margen_max !== null && p.margen_max !== '' && p.margen_max !== undefined;
-  if (!hasMin && !hasMax && !hasCost) return '—';
+  if (!hasMin && !hasMax && !hasCost) return 'Indefinido';
 
   const sym = getOppCurSym(p.moneda);
   const periodoStr = p.periodo === 'año' ? ' / año' : ' / mes';
