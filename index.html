@@ -1851,7 +1851,7 @@ function techCostSection(label, category) {
               <th colspan="${isTool ? 6 : 5}" style="padding:9px 12px;text-align:left;background:var(--bg-card,#fff)">
                 <div style="display:flex;align-items:center;justify-content:space-between">
                   <span style="font-size:13.5px;font-weight:700;color:var(--text)">${label}</span>
-                  ${isTool ? '<span style="font-size:11.5px;color:var(--text-muted);font-weight:normal">Hasta 5 planes por herramienta con denominación personalizada</span>' : ''}
+                  ${isTool ? '<span style="font-size:11.5px;color:var(--text-muted);font-weight:normal">Hasta 7 planes por herramienta con denominación personalizada</span>' : ''}
                 </div>
               </th>
             </tr>
@@ -1891,7 +1891,7 @@ function toolRowsOppHtml(t, plans) {
     ? `<div style="width:26px;height:26px;border-radius:6px;background:var(--bg-card2);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${thumbUrl(t.image_url, 64)}" width="22" height="22" loading="lazy" decoding="async" style="max-width:100%;max-height:100%;object-fit:contain" alt="${esc(t.name)}"></div>`
     : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-card2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary);flex-shrink:0">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
 
-  const isMax = plans.length >= 5;
+  const isMax = plans.length >= 7;
 
   return plans.map((p, idx) => {
     const isFirst = idx === 0;
@@ -1917,7 +1917,7 @@ function toolRowsOppHtml(t, plans) {
       <td style="padding:6px 10px;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:center;gap:6px">
           <input type="text" class="form-input tc-plan-input" data-field="name" placeholder="Nombre del plan..." data-initial="${esc(nameVal)}" value="${esc(nameVal)}" style="padding:4px 8px;font-size:12px;width:125px">
-          <button type="button" class="btn tc-add-plan-btn" style="padding:0;width:24px;height:24px;border-radius:6px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3);cursor:pointer;font-weight:bold;font-size:14px;display:inline-flex;align-items:center;justify-content:center;${isMax ? 'opacity:0.3;cursor:not-allowed;pointer-events:none;' : ''}" title="${isMax ? 'Máximo 5 planes alcanzado' : 'Añadir sub-plan'}" data-tool-id="${esc(t.id)}">+</button>
+          <button type="button" class="btn tc-add-plan-btn" style="padding:0;width:24px;height:24px;border-radius:6px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3);cursor:pointer;font-weight:bold;font-size:14px;display:inline-flex;align-items:center;justify-content:center;${isMax ? 'opacity:0.3;cursor:not-allowed;pointer-events:none;' : ''}" title="${isMax ? 'Máximo 7 planes alcanzado' : 'Añadir sub-plan'}" data-tool-id="${esc(t.id)}">+</button>
           ${plans.length > 1 ? `
           <button type="button" class="btn tc-del-plan-btn" style="padding:0;width:24px;height:24px;border-radius:6px;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);cursor:pointer;font-weight:bold;font-size:11px;display:inline-flex;align-items:center;justify-content:center" title="Eliminar plan" data-tool-id="${esc(t.id)}" data-plan-index="${idx}">✕</button>` : ''}
         </div>
@@ -1978,8 +1978,8 @@ function wireTechCostInputs() {
       if (!tool) return;
       const group = container.querySelector(`[data-tc-group="${toolId}"]`);
       tool.plans = getOppPlansFromGroupDom(group, tool);
-      if (tool.plans.length >= 5) {
-        toast('warning', 'Límite', 'Máximo 5 planes por herramienta');
+      if (tool.plans.length >= 7) {
+        toast('warning', 'Límite', 'Máximo 7 planes por herramienta');
         return;
       }
       const lastMoneda = tool.plans[tool.plans.length - 1]?.moneda || tool.moneda || 'PEN';
