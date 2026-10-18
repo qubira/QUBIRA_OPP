@@ -1572,6 +1572,7 @@ function getOppCurSym(m) {
 
 function normalizeTechPlans(t) {
   const defaultMoneda = t.moneda || 'PEN';
+  const defaultPeriodo = t.periodo || 'mes';
   if (Array.isArray(t.plans) && t.plans.length > 0) {
     return t.plans.map(p => ({
       name: p.name ?? '',
@@ -1579,6 +1580,7 @@ function normalizeTechPlans(t) {
       margen_min: p.margen_min ?? null,
       margen_max: p.margen_max ?? null,
       moneda: p.moneda || defaultMoneda,
+      periodo: p.periodo || defaultPeriodo,
     }));
   }
   return [{
@@ -1587,6 +1589,7 @@ function normalizeTechPlans(t) {
     margen_min: t.margen_min ?? null,
     margen_max: t.margen_max ?? null,
     moneda: defaultMoneda,
+    periodo: defaultPeriodo,
   }];
 }
 
@@ -1611,10 +1614,12 @@ function renderOppTechCatalogLists() {
         costBadge = `<span class="badge" style="background:rgba(99,102,241,.15);color:#818cf8;font-size:11px;font-weight:600">${plans.length} planes</span>`;
       } else if (plans[0]?.costo != null && plans[0]?.costo !== '') {
         const sym = getOppCurSym(plans[0].moneda || t.moneda);
-        costBadge = `<span class="badge" style="background:rgba(16,185,129,.15);color:#10b981;font-size:11px">${sym} ${Number(plans[0].costo).toFixed(2)}</span>`;
+        const per = (plans[0].periodo || t.periodo) === 'año' ? '/año' : '/mes';
+        costBadge = `<span class="badge" style="background:rgba(16,185,129,.15);color:#10b981;font-size:11px">${sym} ${Number(plans[0].costo).toFixed(2)} ${per}</span>`;
       } else if (t.costo != null && t.costo !== '') {
         const sym = getOppCurSym(t.moneda);
-        costBadge = `<span class="badge" style="background:rgba(16,185,129,.15);color:#10b981;font-size:11px">${sym} ${Number(t.costo).toFixed(2)}</span>`;
+        const per = t.periodo === 'año' ? '/año' : '/mes';
+        costBadge = `<span class="badge" style="background:rgba(16,185,129,.15);color:#10b981;font-size:11px">${sym} ${Number(t.costo).toFixed(2)} ${per}</span>`;
       }
 
       return `
@@ -1657,14 +1662,18 @@ function fmtTechS(v, moneda = 'PEN') {
 }
 
 function techPropuestaLabel(p) {
-  if (p.costo == null || p.costo === '') return '—';
-  const costo = Number(p.costo) || 0;
-  const min = costo + (Number(p.margen_min) || 0);
-  const max = costo + (Number(p.margen_max) || 0);
+  const hasCost = p.costo !== null && p.costo !== '' && p.costo !== undefined;
+  const hasMin = p.margen_min !== null && p.margen_min !== '' && p.margen_min !== undefined;
+  const hasMax = p.margen_max !== null && p.margen_max !== '' && p.margen_max !== undefined;
+  if (!hasMin && !hasMax && !hasCost) return '—';
+
+  const min = Number(p.margen_min) || 0;
+  const max = Number(p.margen_max) || 0;
+  const diff = Math.abs(max - min);
   const sym = getOppCurSym(p.moneda);
-  const fMin = Number(min).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const fMax = Number(max).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return `${sym} ${fMin} – ${sym} ${fMax}`;
+  const periodoStr = p.periodo === 'año' ? ' / año' : ' / mes';
+  const fDiff = Number(diff).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${sym} ${fDiff}${periodoStr}`;
 }
 
 let _oppTechSearchQuery = '';
@@ -1817,6 +1826,15 @@ function oppCurrencySelectHtml(curVal = 'PEN') {
   </select>`;
 }
 
+function oppPeriodSelectHtml(currentPeriod = 'mes') {
+  const p = currentPeriod === 'año' ? 'año' : 'mes';
+  return `
+  <select data-field="periodo" data-initial="${p}" class="form-select tc-period-select" style="padding:2px 4px;font-size:11px;font-weight:500;height:27px;background:var(--bg-card2);border:1px solid var(--border);border-radius:6px;cursor:pointer">
+    <option value="mes" ${p === 'mes' ? 'selected' : ''}>Por mes</option>
+    <option value="año" ${p === 'año' ? 'selected' : ''}>Por año</option>
+  </select>`;
+}
+
 function techCostSection(label, category) {
   const items = _techCatalogCache[category] || [];
   const isTool = category === 'tool';
@@ -1882,6 +1900,7 @@ function toolRowsOppHtml(t, plans) {
     const maxVal = p.margen_max ?? '';
     const nameVal = p.name ?? '';
     const curVal = p.moneda || 'PEN';
+    const perVal = p.periodo || t.periodo || 'mes';
 
     return `
     <tr data-tc-plan-row data-plan-index="${idx}">
@@ -1907,6 +1926,7 @@ function toolRowsOppHtml(t, plans) {
         <div style="display:flex;align-items:center;gap:4px">
           ${oppCurrencySelectHtml(curVal)}
           <input type="number" step="0.01" min="0" class="form-input tc-plan-input" style="padding:4px 6px;font-size:12px;width:72px" data-field="costo" placeholder="0.00" data-initial="${cVal}" value="${cVal}">
+          ${oppPeriodSelectHtml(perVal)}
         </div>
       </td>
       <td style="padding:6px 10px;border-bottom:1px solid var(--border)"><input type="number" step="0.01" min="0" class="form-input tc-plan-input" style="padding:4px 6px;font-size:12px;width:72px" data-field="margen_min" placeholder="0.00" data-initial="${minVal}" value="${minVal}"></td>
@@ -1921,6 +1941,7 @@ function techCostLanguageRow(t) {
     ? `<div style="width:26px;height:26px;border-radius:6px;background:var(--bg-card2);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${thumbUrl(t.image_url, 64)}" width="22" height="22" loading="lazy" decoding="async" style="max-width:100%;max-height:100%;object-fit:contain" alt="${esc(t.name)}"></div>`
     : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-card2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary);flex-shrink:0">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
   const curVal = t.moneda || 'PEN';
+  const perVal = t.periodo || 'mes';
   return `
   <tr data-tc-row="${esc(t.id)}" data-category="language" data-name="${esc((t.name || '').toLowerCase())}" style="border-top:1px solid var(--border)">
     <td style="padding:7px 10px">
@@ -1933,6 +1954,7 @@ function techCostLanguageRow(t) {
       <div style="display:flex;align-items:center;gap:4px">
         ${oppCurrencySelectHtml(curVal)}
         <input type="number" step="0.01" min="0" class="form-input" style="padding:4px 6px;font-size:12px;width:72px" data-field="costo" placeholder="0.00" data-initial="${t.costo ?? ''}" value="${t.costo ?? ''}">
+        ${oppPeriodSelectHtml(perVal)}
       </div>
     </td>
     <td style="padding:7px 10px"><input type="number" step="0.01" min="0" class="form-input" style="padding:4px 6px;font-size:12px;width:72px" data-field="margen_min" placeholder="0.00" data-initial="${t.margen_min ?? ''}" value="${t.margen_min ?? ''}"></td>
@@ -1961,7 +1983,8 @@ function wireTechCostInputs() {
         return;
       }
       const lastMoneda = tool.plans[tool.plans.length - 1]?.moneda || tool.moneda || 'PEN';
-      tool.plans.push({ name: '', costo: null, margen_min: null, margen_max: null, moneda: lastMoneda });
+      const lastPeriodo = tool.plans[tool.plans.length - 1]?.periodo || tool.periodo || 'mes';
+      tool.plans.push({ name: '', costo: null, margen_min: null, margen_max: null, moneda: lastMoneda, periodo: lastPeriodo });
       if (group) {
         group.innerHTML = toolRowsOppHtml(tool, tool.plans);
         const nameInputs = group.querySelectorAll('input[data-field="name"]');
@@ -1989,19 +2012,20 @@ function wireTechCostInputs() {
     }
   });
 
-  // 2. Selector de moneda (change event)
+  // 2. Selector de moneda o periodo (change event)
   container.addEventListener('change', (e) => {
-    const sel = e.target.closest('.tc-currency-select');
+    const sel = e.target.closest('.tc-currency-select, .tc-period-select');
     if (!sel) return;
-    const newMoneda = sel.value;
 
     const planRow = sel.closest('[data-tc-plan-row]');
     if (planRow) {
       const costo = planRow.querySelector('[data-field="costo"]')?.value ?? '';
       const margen_min = planRow.querySelector('[data-field="margen_min"]')?.value ?? '';
       const margen_max = planRow.querySelector('[data-field="margen_max"]')?.value ?? '';
+      const moneda = planRow.querySelector('[data-field="moneda"]')?.value || 'PEN';
+      const periodo = planRow.querySelector('[data-field="periodo"]')?.value || 'mes';
       const propEl = planRow.querySelector('.tc-propuesta');
-      if (propEl) propEl.textContent = techPropuestaLabel({ costo, margen_min, margen_max, moneda: newMoneda });
+      if (propEl) propEl.textContent = techPropuestaLabel({ costo, margen_min, margen_max, moneda, periodo });
 
       const group = sel.closest('[data-tc-group]');
       if (group) {
@@ -2019,20 +2043,25 @@ function wireTechCostInputs() {
       const costo = langRow.querySelector('[data-field="costo"]')?.value ?? '';
       const margen_min = langRow.querySelector('[data-field="margen_min"]')?.value ?? '';
       const margen_max = langRow.querySelector('[data-field="margen_max"]')?.value ?? '';
+      const moneda = langRow.querySelector('[data-field="moneda"]')?.value || 'PEN';
+      const periodo = langRow.querySelector('[data-field="periodo"]')?.value || 'mes';
       const propEl = langRow.querySelector('.tc-propuesta');
-      if (propEl) propEl.textContent = techPropuestaLabel({ costo, margen_min, margen_max, moneda: newMoneda });
+      if (propEl) propEl.textContent = techPropuestaLabel({ costo, margen_min, margen_max, moneda, periodo });
 
       const id = langRow.dataset.tcRow;
       const cInput = langRow.querySelector('[data-field="costo"]');
       const minInput = langRow.querySelector('[data-field="margen_min"]');
       const maxInput = langRow.querySelector('[data-field="margen_max"]');
+      const monSel = langRow.querySelector('[data-field="moneda"]');
+      const perSel = langRow.querySelector('[data-field="periodo"]');
       const values = {
         costo,
         margen_min,
         margen_max,
-        moneda: newMoneda,
+        moneda,
+        periodo,
       };
-      saveTechCostRow(id, 'language', values, langRow, [cInput, minInput, maxInput, sel]);
+      saveTechCostRow(id, 'language', values, langRow, [cInput, minInput, maxInput, monSel, perSel]);
     }
   });
 
@@ -2044,11 +2073,13 @@ function wireTechCostInputs() {
     const planRow = inp.closest('[data-tc-plan-row]');
     if (planRow) {
       const moneda = planRow.querySelector('[data-field="moneda"]')?.value || 'PEN';
+      const periodo = planRow.querySelector('[data-field="periodo"]')?.value || 'mes';
       const readPlan = {
         costo: planRow.querySelector('[data-field="costo"]')?.value ?? '',
         margen_min: planRow.querySelector('[data-field="margen_min"]')?.value ?? '',
         margen_max: planRow.querySelector('[data-field="margen_max"]')?.value ?? '',
         moneda,
+        periodo,
       };
       const propuestaEl = planRow.querySelector('.tc-propuesta');
       if (propuestaEl) propuestaEl.textContent = techPropuestaLabel(readPlan);
@@ -2058,11 +2089,13 @@ function wireTechCostInputs() {
     const row = inp.closest('[data-tc-row]');
     if (row) {
       const moneda = row.querySelector('[data-field="moneda"]')?.value || 'PEN';
+      const periodo = row.querySelector('[data-field="periodo"]')?.value || 'mes';
       const readLang = {
         costo: row.querySelector('[data-field="costo"]')?.value ?? '',
         margen_min: row.querySelector('[data-field="margen_min"]')?.value ?? '',
         margen_max: row.querySelector('[data-field="margen_max"]')?.value ?? '',
         moneda,
+        periodo,
       };
       const propuestaEl = row.querySelector('.tc-propuesta');
       if (propuestaEl) propuestaEl.textContent = techPropuestaLabel(readLang);
@@ -2089,12 +2122,14 @@ function wireTechCostInputs() {
         const minInp = pr.querySelector('[data-field="margen_min"]');
         const maxInp = pr.querySelector('[data-field="margen_max"]');
         const monSel = pr.querySelector('[data-field="moneda"]');
+        const perSel = pr.querySelector('[data-field="periodo"]');
         if (
           (nameInp && nameInp.value !== nameInp.dataset.initial) ||
           (costInp && costInp.value !== costInp.dataset.initial) ||
           (minInp && minInp.value !== minInp.dataset.initial) ||
           (maxInp && maxInp.value !== maxInp.dataset.initial) ||
-          (monSel && monSel.value !== monSel.dataset.initial)
+          (monSel && monSel.value !== monSel.dataset.initial) ||
+          (perSel && perSel.value !== perSel.dataset.initial)
         ) {
           changed = true;
         }
@@ -2113,11 +2148,13 @@ function wireTechCostInputs() {
       const minInput = row.querySelector('[data-field="margen_min"]');
       const maxInput = row.querySelector('[data-field="margen_max"]');
       const monSel = row.querySelector('[data-field="moneda"]');
+      const perSel = row.querySelector('[data-field="periodo"]');
       if (
         cInput.value === cInput.dataset.initial &&
         minInput.value === minInput.dataset.initial &&
         maxInput.value === maxInput.dataset.initial &&
-        (!monSel || monSel.value === monSel.dataset.initial)
+        (!monSel || monSel.value === monSel.dataset.initial) &&
+        (!perSel || perSel.value === perSel.dataset.initial)
       ) {
         return;
       }
@@ -2127,8 +2164,9 @@ function wireTechCostInputs() {
         margen_min: minInput.value,
         margen_max: maxInput.value,
         moneda: monSel ? monSel.value : 'PEN',
+        periodo: perSel ? perSel.value : 'mes',
       };
-      saveTechCostRow(id, 'language', values, row, [cInput, minInput, maxInput, monSel]);
+      saveTechCostRow(id, 'language', values, row, [cInput, minInput, maxInput, monSel, perSel]);
     }
   });
 }
@@ -2143,12 +2181,14 @@ function getOppPlansFromGroupDom(group, fallbackTool) {
     const minInp = pr.querySelector('[data-field="margen_min"]');
     const maxInp = pr.querySelector('[data-field="margen_max"]');
     const monSel = pr.querySelector('[data-field="moneda"]');
+    const perSel = pr.querySelector('[data-field="periodo"]');
     return {
       name: nameInp ? nameInp.value.trim() : '',
       costo: costInp && costInp.value !== '' ? Number(costInp.value) : null,
       margen_min: minInp && minInp.value !== '' ? Number(minInp.value) : null,
       margen_max: maxInp && maxInp.value !== '' ? Number(maxInp.value) : null,
       moneda: monSel ? monSel.value : (fallbackTool.moneda || 'PEN'),
+      periodo: perSel ? perSel.value : (fallbackTool.periodo || 'mes'),
     };
   });
 }
@@ -2166,6 +2206,7 @@ async function saveOppToolPlans(tool, group) {
       margen_min: plans[0]?.margen_min ?? null,
       margen_max: plans[0]?.margen_max ?? null,
       moneda: plans[0]?.moneda ?? 'PEN',
+      periodo: plans[0]?.periodo ?? 'mes',
       plans: plans,
     };
     await oppFetch(`/api/opp/tech-catalog/${tool.id}/cost`, { method: 'PUT', body: JSON.stringify(payload) });
@@ -2179,11 +2220,13 @@ async function saveOppToolPlans(tool, group) {
         const minInp = pr.querySelector('[data-field="margen_min"]');
         const maxInp = pr.querySelector('[data-field="margen_max"]');
         const monSel = pr.querySelector('[data-field="moneda"]');
+        const perSel = pr.querySelector('[data-field="periodo"]');
         if (nameInp) nameInp.dataset.initial = p.name ?? '';
         if (costInp) costInp.dataset.initial = p.costo ?? '';
         if (minInp) minInp.dataset.initial = p.margen_min ?? '';
         if (maxInp) maxInp.dataset.initial = p.margen_max ?? '';
         if (monSel) monSel.dataset.initial = p.moneda ?? 'PEN';
+        if (perSel) perSel.dataset.initial = p.periodo ?? 'mes';
       });
       group.style.background = 'rgba(16,185,129,.08)';
       setTimeout(() => { group.style.background = ''; }, 700);
@@ -2201,6 +2244,7 @@ async function saveTechCostRow(id, category, values, row, inputs) {
       if (inputs[1]) inputs[1].dataset.initial = values.margen_min;
       if (inputs[2]) inputs[2].dataset.initial = values.margen_max;
       if (inputs[3]) inputs[3].dataset.initial = values.moneda;
+      if (inputs[4]) inputs[4].dataset.initial = values.periodo;
     }
     const item = (_techCatalogCache[category] || []).find(x => x.id === id);
     if (item) Object.assign(item, {
@@ -2208,6 +2252,7 @@ async function saveTechCostRow(id, category, values, row, inputs) {
       margen_min: values.margen_min === '' ? null : Number(values.margen_min),
       margen_max: values.margen_max === '' ? null : Number(values.margen_max),
       moneda: values.moneda || 'PEN',
+      periodo: values.periodo || 'mes',
     });
     row.style.background = 'rgba(16,185,129,.08)';
     setTimeout(() => { row.style.background = ''; }, 700);
