@@ -1947,20 +1947,21 @@ function wireTechCostInputs() {
   container.dataset.wired = 'true';
 
   // 1. Botones Agregar (+) y Eliminar (✕) sub-planes
+  // 1. Botones Agregar (+) y Eliminar (✕) sub-planes
   container.addEventListener('click', async (e) => {
     const addBtn = e.target.closest('.tc-add-plan-btn');
     if (addBtn) {
       const toolId = addBtn.dataset.toolId;
       const tool = (_techCatalogCache.tool || []).find(x => x.id === toolId);
       if (!tool) return;
-      tool.plans = normalizeTechPlans(tool);
+      const group = container.querySelector(`[data-tc-group="${toolId}"]`);
+      tool.plans = getOppPlansFromGroupDom(group, tool);
       if (tool.plans.length >= 5) {
         toast('warning', 'Límite', 'Máximo 5 planes por herramienta');
         return;
       }
       const lastMoneda = tool.plans[tool.plans.length - 1]?.moneda || tool.moneda || 'PEN';
       tool.plans.push({ name: '', costo: null, margen_min: null, margen_max: null, moneda: lastMoneda });
-      const group = container.querySelector(`[data-tc-group="${toolId}"]`);
       if (group) {
         group.innerHTML = toolRowsOppHtml(tool, tool.plans);
         const nameInputs = group.querySelectorAll('input[data-field="name"]');
@@ -1976,10 +1977,10 @@ function wireTechCostInputs() {
       const idx = Number(delBtn.dataset.planIndex);
       const tool = (_techCatalogCache.tool || []).find(x => x.id === toolId);
       if (!tool) return;
-      tool.plans = normalizeTechPlans(tool);
+      const group = container.querySelector(`[data-tc-group="${toolId}"]`);
+      tool.plans = getOppPlansFromGroupDom(group, tool);
       if (tool.plans.length <= 1) return;
       tool.plans.splice(idx, 1);
-      const group = container.querySelector(`[data-tc-group="${toolId}"]`);
       if (group) {
         group.innerHTML = toolRowsOppHtml(tool, tool.plans);
       }
@@ -2132,9 +2133,11 @@ function wireTechCostInputs() {
   });
 }
 
-function collectAndSaveOppToolPlans(tool, group) {
+function getOppPlansFromGroupDom(group, fallbackTool) {
+  if (!group) return normalizeTechPlans(fallbackTool);
   const planRows = group.querySelectorAll('[data-tc-plan-row]');
-  const currentPlans = Array.from(planRows).map(pr => {
+  if (!planRows.length) return normalizeTechPlans(fallbackTool);
+  return Array.from(planRows).map(pr => {
     const nameInp = pr.querySelector('[data-field="name"]');
     const costInp = pr.querySelector('[data-field="costo"]');
     const minInp = pr.querySelector('[data-field="margen_min"]');
@@ -2145,10 +2148,13 @@ function collectAndSaveOppToolPlans(tool, group) {
       costo: costInp && costInp.value !== '' ? Number(costInp.value) : null,
       margen_min: minInp && minInp.value !== '' ? Number(minInp.value) : null,
       margen_max: maxInp && maxInp.value !== '' ? Number(maxInp.value) : null,
-      moneda: monSel ? monSel.value : 'PEN',
+      moneda: monSel ? monSel.value : (fallbackTool.moneda || 'PEN'),
     };
   });
-  tool.plans = currentPlans;
+}
+
+function collectAndSaveOppToolPlans(tool, group) {
+  tool.plans = getOppPlansFromGroupDom(group, tool);
   saveOppToolPlans(tool, group);
 }
 
