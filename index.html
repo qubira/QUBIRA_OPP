@@ -1564,6 +1564,23 @@ async function loadOppTechCatalog() {
   }
 }
 
+function normalizeTechPlans(t) {
+  if (Array.isArray(t.plans) && t.plans.length > 0) {
+    return t.plans.map(p => ({
+      name: p.name ?? '',
+      costo: p.costo ?? null,
+      margen_min: p.margen_min ?? null,
+      margen_max: p.margen_max ?? null,
+    }));
+  }
+  return [{
+    name: '',
+    costo: t.costo ?? null,
+    margen_min: t.margen_min ?? null,
+    margen_max: t.margen_max ?? null,
+  }];
+}
+
 function renderOppTechCatalogLists() {
   const renderList = (items, targetId, countId) => {
     const el = document.getElementById(targetId);
@@ -1578,9 +1595,17 @@ function renderOppTechCatalogLists() {
       const avatar = t.image_url
         ? `<div style="width:28px;height:28px;border-radius:6px;background:var(--bg-card2);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${thumbUrl(t.image_url, 64)}" width="24" height="24" loading="lazy" decoding="async" style="max-width:100%;max-height:100%;object-fit:contain" alt="${esc(t.name)}"></div>`
         : `<span style="width:28px;height:28px;border-radius:6px;background:var(--bg-card2);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--primary);flex-shrink:0">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
-      const costBadge = t.costo != null && t.costo !== ''
-        ? `<span class="badge" style="background:rgba(16,185,129,.15);color:#10b981;font-size:11px">S/ ${Number(t.costo).toFixed(2)}</span>`
-        : '';
+      
+      const plans = normalizeTechPlans(t);
+      let costBadge = '';
+      if (t.category === 'tool' && plans.length > 1) {
+        costBadge = `<span class="badge" style="background:rgba(99,102,241,.15);color:#818cf8;font-size:11px;font-weight:600">${plans.length} planes</span>`;
+      } else if (plans[0]?.costo != null && plans[0]?.costo !== '') {
+        costBadge = `<span class="badge" style="background:rgba(16,185,129,.15);color:#10b981;font-size:11px">S/ ${Number(plans[0].costo).toFixed(2)}</span>`;
+      } else if (t.costo != null && t.costo !== '') {
+        costBadge = `<span class="badge" style="background:rgba(16,185,129,.15);color:#10b981;font-size:11px">S/ ${Number(t.costo).toFixed(2)}</span>`;
+      }
+
       return `
       <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
         ${avatar}
@@ -1644,20 +1669,35 @@ function filterOppTechCost() {
   let langVisible = 0;
   let toolVisible = 0;
 
-  const rows = document.querySelectorAll('#tech-cost-body [data-tc-row]');
-  rows.forEach(row => {
+  // 1. Lenguajes
+  const langRows = document.querySelectorAll('#tech-cost-body [data-tc-row]');
+  langRows.forEach(row => {
     const name = row.dataset.name || '';
-    const cat = row.dataset.category;
     const matchesQ = !_oppTechSearchQuery || name.includes(_oppTechSearchQuery);
-    const matchesTab = (_techCostFilter === 'all' || cat === _techCostFilter);
+    const matchesTab = (_techCostFilter === 'all' || _techCostFilter === 'language');
 
     if (matchesQ) {
-      if (cat === 'language') langVisible++;
-      if (cat === 'tool') toolVisible++;
+      langVisible++;
       totalVisible++;
     }
-
     row.style.display = (matchesQ && matchesTab) ? '' : 'none';
+  });
+
+  // 2. Herramientas
+  const toolGroups = document.querySelectorAll('#tech-cost-body [data-tc-group]');
+  toolGroups.forEach(group => {
+    const name = group.dataset.name || '';
+    const toolId = group.dataset.tcGroup;
+    const toolItem = (_techCatalogCache.tool || []).find(x => x.id === toolId);
+    const plansNames = (toolItem?.plans || []).map(p => (p.name || '').toLowerCase()).join(' ');
+    const matchesQ = !_oppTechSearchQuery || name.includes(_oppTechSearchQuery) || plansNames.includes(_oppTechSearchQuery);
+    const matchesTab = (_techCostFilter === 'all' || _techCostFilter === 'tool');
+
+    if (matchesQ) {
+      toolVisible++;
+      totalVisible++;
+    }
+    group.style.display = (matchesQ && matchesTab) ? '' : 'none';
   });
 
   const cntAll = document.getElementById('opp-tc-cnt-all');
@@ -1754,24 +1794,30 @@ function renderTechCostBody() {
 
 function techCostSection(label, category) {
   const items = _techCatalogCache[category] || [];
+  const isTool = category === 'tool';
   return `
   <div style="margin-bottom:18px">
-    <h4 style="font-size:13.5px;font-weight:700;margin-bottom:8px">${label}</h4>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <h4 style="font-size:13.5px;font-weight:700;margin:0">${label}</h4>
+      ${isTool ? '<span style="font-size:11.5px;color:var(--text-muted)">Hasta 5 planes por herramienta con denominación propia</span>' : ''}
+    </div>
     ${items.length === 0 ? '<p style="font-size:12px;color:var(--text-muted)">Sin registrar</p>' : `
     <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px" id="opp-tc-wrap-${category}">
       <table style="width:100%;border-collapse:collapse;font-size:12.5px">
         <thead>
           <tr style="background:var(--bg-card2);color:var(--text-muted);text-transform:uppercase;font-size:10.5px">
             <th style="text-align:left;padding:8px 10px">Herramienta</th>
+            ${isTool ? '<th style="text-align:left;padding:8px 10px">Plan</th>' : ''}
             <th style="text-align:left;padding:8px 10px">Costo (S/)</th>
             <th style="text-align:left;padding:8px 10px">Margen mín (S/)</th>
             <th style="text-align:left;padding:8px 10px">Margen máx (S/)</th>
             <th style="text-align:left;padding:8px 10px">Propuesta (S/)</th>
           </tr>
         </thead>
+        ${isTool ? items.map(t => toolGroupOppHtml(t)).join('') : `
         <tbody>
-          ${items.map(t => techCostRow(t, category)).join('')}
-        </tbody>
+          ${items.map(t => techCostLanguageRow(t)).join('')}
+        </tbody>`}
       </table>
     </div>
     <div id="opp-tc-empty-${category}" style="display:none;padding:16px;text-align:center;font-size:12px;color:var(--text-muted);background:var(--bg-card2,#f9fafb);border-radius:8px;border:1px dashed var(--border);margin-top:8px">
@@ -1780,21 +1826,72 @@ function techCostSection(label, category) {
   </div>`;
 }
 
-function techCostRow(t, category) {
+function toolGroupOppHtml(t) {
+  const plans = normalizeTechPlans(t);
+  t.plans = plans;
+  return `
+  <tbody data-tc-group="${esc(t.id)}" data-category="tool" data-name="${esc((t.name || '').toLowerCase())}" style="border-top:1px solid var(--border)">
+    ${toolRowsOppHtml(t, plans)}
+  </tbody>`;
+}
+
+function toolRowsOppHtml(t, plans) {
+  const avatar = t.image_url
+    ? `<div style="width:26px;height:26px;border-radius:6px;background:var(--bg-card2);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${thumbUrl(t.image_url, 64)}" width="22" height="22" loading="lazy" decoding="async" style="max-width:100%;max-height:100%;object-fit:contain" alt="${esc(t.name)}"></div>`
+    : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-card2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary);flex-shrink:0">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
+
+  const isMax = plans.length >= 5;
+
+  return plans.map((p, idx) => {
+    const isFirst = idx === 0;
+    const cVal = p.costo ?? '';
+    const minVal = p.margen_min ?? '';
+    const maxVal = p.margen_max ?? '';
+    const nameVal = p.name ?? '';
+
+    return `
+    <tr data-tc-plan-row data-plan-index="${idx}">
+      ${isFirst ? `
+      <td rowspan="${plans.length}" style="padding:8px 10px;vertical-align:middle;background:var(--bg-card,#fff);border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:10px">
+          ${avatar}
+          <div>
+            <span style="white-space:nowrap;font-weight:600;display:block">${esc(t.name)}</span>
+            ${plans.length > 1 ? `<span style="font-size:10.5px;color:var(--text-muted)">${plans.length} planes</span>` : ''}
+          </div>
+        </div>
+      </td>` : ''}
+      <td style="padding:6px 10px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="text" class="form-input tc-plan-input" data-field="name" placeholder="Nombre del plan..." data-initial="${esc(nameVal)}" value="${esc(nameVal)}" style="padding:4px 8px;font-size:12px;width:125px">
+          <button type="button" class="btn tc-add-plan-btn" style="padding:0;width:24px;height:24px;border-radius:6px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3);cursor:pointer;font-weight:bold;font-size:14px;display:inline-flex;align-items:center;justify-content:center;${isMax ? 'opacity:0.3;cursor:not-allowed;pointer-events:none;' : ''}" title="${isMax ? 'Máximo 5 planes alcanzado' : 'Añadir sub-plan'}" data-tool-id="${esc(t.id)}">+</button>
+          ${plans.length > 1 ? `
+          <button type="button" class="btn tc-del-plan-btn" style="padding:0;width:24px;height:24px;border-radius:6px;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);cursor:pointer;font-weight:bold;font-size:11px;display:inline-flex;align-items:center;justify-content:center" title="Eliminar plan" data-tool-id="${esc(t.id)}" data-plan-index="${idx}">✕</button>` : ''}
+        </div>
+      </td>
+      <td style="padding:6px 10px;border-bottom:1px solid var(--border)"><input type="number" step="0.01" min="0" class="form-input tc-plan-input" style="padding:4px 8px;font-size:12px;width:86px" data-field="costo" data-initial="${cVal}" value="${cVal}"></td>
+      <td style="padding:6px 10px;border-bottom:1px solid var(--border)"><input type="number" step="0.01" min="0" class="form-input tc-plan-input" style="padding:4px 8px;font-size:12px;width:86px" data-field="margen_min" data-initial="${minVal}" value="${minVal}"></td>
+      <td style="padding:6px 10px;border-bottom:1px solid var(--border)"><input type="number" step="0.01" min="0" class="form-input tc-plan-input" style="padding:4px 8px;font-size:12px;width:86px" data-field="margen_max" data-initial="${maxVal}" value="${maxVal}"></td>
+      <td style="padding:6px 10px;white-space:nowrap;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border)" class="tc-propuesta">${techPropuestaLabel(p)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function techCostLanguageRow(t) {
   const avatar = t.image_url
     ? `<div style="width:26px;height:26px;border-radius:6px;background:var(--bg-card2);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${thumbUrl(t.image_url, 64)}" width="22" height="22" loading="lazy" decoding="async" style="max-width:100%;max-height:100%;object-fit:contain" alt="${esc(t.name)}"></div>`
     : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-card2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary);flex-shrink:0">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
   return `
-  <tr data-tc-row="${esc(t.id)}" data-category="${category}" data-name="${esc((t.name || '').toLowerCase())}" style="border-top:1px solid var(--border)">
+  <tr data-tc-row="${esc(t.id)}" data-category="language" data-name="${esc((t.name || '').toLowerCase())}" style="border-top:1px solid var(--border)">
     <td style="padding:7px 10px">
       <div style="display:flex;align-items:center;gap:10px">
         ${avatar}
         <span style="white-space:nowrap;font-weight:500">${esc(t.name)}</span>
       </div>
     </td>
-    <td style="padding:7px 10px"><input type="number" step="0.01" min="0" class="form-input" style="padding:5px 8px;font-size:12px;width:90px" data-field="costo" value="${t.costo ?? ''}"></td>
-    <td style="padding:7px 10px"><input type="number" step="0.01" min="0" class="form-input" style="padding:5px 8px;font-size:12px;width:90px" data-field="margen_min" value="${t.margen_min ?? ''}"></td>
-    <td style="padding:7px 10px"><input type="number" step="0.01" min="0" class="form-input" style="padding:5px 8px;font-size:12px;width:90px" data-field="margen_max" value="${t.margen_max ?? ''}"></td>
+    <td style="padding:7px 10px"><input type="number" step="0.01" min="0" class="form-input" style="padding:5px 8px;font-size:12px;width:90px" data-field="costo" data-initial="${t.costo ?? ''}" value="${t.costo ?? ''}"></td>
+    <td style="padding:7px 10px"><input type="number" step="0.01" min="0" class="form-input" style="padding:5px 8px;font-size:12px;width:90px" data-field="margen_min" data-initial="${t.margen_min ?? ''}" value="${t.margen_min ?? ''}"></td>
+    <td style="padding:7px 10px"><input type="number" step="0.01" min="0" class="form-input" style="padding:5px 8px;font-size:12px;width:90px" data-field="margen_max" data-initial="${t.margen_max ?? ''}" value="${t.margen_max ?? ''}"></td>
     <td style="padding:7px 10px;white-space:nowrap;color:var(--text-muted)" class="tc-propuesta">${techPropuestaLabel(t)}</td>
   </tr>`;
 }
@@ -1804,39 +1901,182 @@ function wireTechCostInputs() {
   if (!container || container.dataset.wired) return;
   container.dataset.wired = 'true';
 
-  const readRow = (row) => ({
-    costo: row.querySelector('[data-field="costo"]')?.value ?? '',
-    margen_min: row.querySelector('[data-field="margen_min"]')?.value ?? '',
-    margen_max: row.querySelector('[data-field="margen_max"]')?.value ?? '',
+  // 1. Botones Agregar (+) y Eliminar (✕) sub-planes
+  container.addEventListener('click', async (e) => {
+    const addBtn = e.target.closest('.tc-add-plan-btn');
+    if (addBtn) {
+      const toolId = addBtn.dataset.toolId;
+      const tool = (_techCatalogCache.tool || []).find(x => x.id === toolId);
+      if (!tool) return;
+      tool.plans = normalizeTechPlans(tool);
+      if (tool.plans.length >= 5) {
+        toast('warning', 'Límite', 'Máximo 5 planes por herramienta');
+        return;
+      }
+      tool.plans.push({ name: '', costo: null, margen_min: null, margen_max: null });
+      const group = container.querySelector(`[data-tc-group="${toolId}"]`);
+      if (group) {
+        group.innerHTML = toolRowsOppHtml(tool, tool.plans);
+        const nameInputs = group.querySelectorAll('input[data-field="name"]');
+        if (nameInputs.length) nameInputs[nameInputs.length - 1].focus();
+      }
+      saveOppToolPlans(tool, group);
+      return;
+    }
+
+    const delBtn = e.target.closest('.tc-del-plan-btn');
+    if (delBtn) {
+      const toolId = delBtn.dataset.toolId;
+      const idx = Number(delBtn.dataset.planIndex);
+      const tool = (_techCatalogCache.tool || []).find(x => x.id === toolId);
+      if (!tool) return;
+      tool.plans = normalizeTechPlans(tool);
+      if (tool.plans.length <= 1) return;
+      tool.plans.splice(idx, 1);
+      const group = container.querySelector(`[data-tc-group="${toolId}"]`);
+      if (group) {
+        group.innerHTML = toolRowsOppHtml(tool, tool.plans);
+      }
+      saveOppToolPlans(tool, group);
+      return;
+    }
   });
 
-  // Delegated live calculation on input
+  // 2. Delegated live calculation on input
   container.addEventListener('input', (e) => {
     const inp = e.target;
     if (!inp || !inp.matches('input[data-field]')) return;
+
+    const planRow = inp.closest('[data-tc-plan-row]');
+    if (planRow) {
+      const readPlan = {
+        costo: planRow.querySelector('[data-field="costo"]')?.value ?? '',
+        margen_min: planRow.querySelector('[data-field="margen_min"]')?.value ?? '',
+        margen_max: planRow.querySelector('[data-field="margen_max"]')?.value ?? '',
+      };
+      const propuestaEl = planRow.querySelector('.tc-propuesta');
+      if (propuestaEl) propuestaEl.textContent = techPropuestaLabel(readPlan);
+      return;
+    }
+
     const row = inp.closest('[data-tc-row]');
-    if (!row) return;
-    const propuestaEl = row.querySelector('.tc-propuesta');
-    if (propuestaEl) propuestaEl.textContent = techPropuestaLabel(readRow(row));
+    if (row) {
+      const readLang = {
+        costo: row.querySelector('[data-field="costo"]')?.value ?? '',
+        margen_min: row.querySelector('[data-field="margen_min"]')?.value ?? '',
+        margen_max: row.querySelector('[data-field="margen_max"]')?.value ?? '',
+      };
+      const propuestaEl = row.querySelector('.tc-propuesta');
+      if (propuestaEl) propuestaEl.textContent = techPropuestaLabel(readLang);
+    }
   });
 
-  // Delegated auto-save on blur if value modified
+  // 3. Delegated auto-save on blur if value modified
   container.addEventListener('focusout', (e) => {
     const inp = e.target;
     if (!inp || !inp.matches('input[data-field]')) return;
-    if (inp.defaultValue === inp.value) return;
-    inp.defaultValue = inp.value;
+
+    // Si pertenece a una herramienta (sub-planes)
+    const group = inp.closest('[data-tc-group]');
+    if (group) {
+      const toolId = group.dataset.tcGroup;
+      const tool = (_techCatalogCache.tool || []).find(x => x.id === toolId);
+      if (!tool) return;
+
+      const planRows = group.querySelectorAll('[data-tc-plan-row]');
+      let changed = false;
+      const currentPlans = Array.from(planRows).map(pr => {
+        const nameInp = pr.querySelector('[data-field="name"]');
+        const costInp = pr.querySelector('[data-field="costo"]');
+        const minInp = pr.querySelector('[data-field="margen_min"]');
+        const maxInp = pr.querySelector('[data-field="margen_max"]');
+        if (
+          (nameInp && nameInp.value !== nameInp.dataset.initial) ||
+          (costInp && costInp.value !== costInp.dataset.initial) ||
+          (minInp && minInp.value !== minInp.dataset.initial) ||
+          (maxInp && maxInp.value !== maxInp.dataset.initial)
+        ) {
+          changed = true;
+        }
+        return {
+          name: nameInp ? nameInp.value.trim() : '',
+          costo: costInp && costInp.value !== '' ? Number(costInp.value) : null,
+          margen_min: minInp && minInp.value !== '' ? Number(minInp.value) : null,
+          margen_max: maxInp && maxInp.value !== '' ? Number(maxInp.value) : null,
+        };
+      });
+
+      if (changed) {
+        tool.plans = currentPlans;
+        saveOppToolPlans(tool, group);
+      }
+      return;
+    }
+
+    // Si pertenece a un lenguaje (fila única)
     const row = inp.closest('[data-tc-row]');
-    if (!row) return;
-    const id = row.dataset.tcRow;
-    const category = row.dataset.category;
-    saveTechCostRow(id, category, readRow(row), row);
+    if (row) {
+      const cInput = row.querySelector('[data-field="costo"]');
+      const minInput = row.querySelector('[data-field="margen_min"]');
+      const maxInput = row.querySelector('[data-field="margen_max"]');
+      if (
+        cInput.value === cInput.dataset.initial &&
+        minInput.value === minInput.dataset.initial &&
+        maxInput.value === maxInput.dataset.initial
+      ) {
+        return;
+      }
+      const id = row.dataset.tcRow;
+      const values = {
+        costo: cInput.value,
+        margen_min: minInput.value,
+        margen_max: maxInput.value,
+      };
+      saveTechCostRow(id, 'language', values, row, [cInput, minInput, maxInput]);
+    }
   });
 }
 
-async function saveTechCostRow(id, category, values, row) {
+async function saveOppToolPlans(tool, group) {
+  try {
+    const plans = tool.plans || [];
+    const payload = {
+      costo: plans[0]?.costo ?? null,
+      margen_min: plans[0]?.margen_min ?? null,
+      margen_max: plans[0]?.margen_max ?? null,
+      plans: plans,
+    };
+    await oppFetch(`/api/opp/tech-catalog/${tool.id}/cost`, { method: 'PUT', body: JSON.stringify(payload) });
+    Object.assign(tool, payload);
+    if (group) {
+      const planRows = group.querySelectorAll('[data-tc-plan-row]');
+      planRows.forEach((pr, i) => {
+        const p = plans[i] || {};
+        const nameInp = pr.querySelector('[data-field="name"]');
+        const costInp = pr.querySelector('[data-field="costo"]');
+        const minInp = pr.querySelector('[data-field="margen_min"]');
+        const maxInp = pr.querySelector('[data-field="margen_max"]');
+        if (nameInp) nameInp.dataset.initial = p.name ?? '';
+        if (costInp) costInp.dataset.initial = p.costo ?? '';
+        if (minInp) minInp.dataset.initial = p.margen_min ?? '';
+        if (maxInp) maxInp.dataset.initial = p.margen_max ?? '';
+      });
+      group.style.background = 'rgba(16,185,129,.08)';
+      setTimeout(() => { group.style.background = ''; }, 700);
+    }
+  } catch (err) {
+    toast('error', 'Error al guardar', err.message || 'No se pudieron guardar los planes');
+  }
+}
+
+async function saveTechCostRow(id, category, values, row, inputs) {
   try {
     await oppFetch(`/api/opp/tech-catalog/${id}/cost`, { method: 'PUT', body: JSON.stringify(values) });
+    if (inputs) {
+      inputs[0].dataset.initial = values.costo;
+      inputs[1].dataset.initial = values.margen_min;
+      inputs[2].dataset.initial = values.margen_max;
+    }
     const item = (_techCatalogCache[category] || []).find(x => x.id === id);
     if (item) Object.assign(item, {
       costo: values.costo === '' ? null : Number(values.costo),
