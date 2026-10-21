@@ -256,6 +256,30 @@
 
     /* ── FORM ELEMENTS ── */
     .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+    /* ── DIVISAS ── */
+    .dv-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+    @media (max-width: 1100px) { .dv-grid { grid-template-columns: 1fr; } }
+    .dv-tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .dv-tabla th { text-align: left; padding: 9px 10px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); background: var(--bg-card2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .dv-tabla td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .dv-tabla tr.inactiva td { opacity: .55; }
+    .dv-codigo { font-weight: 800; font-size: 13px; background: var(--primary-light); color: var(--primary-dark); padding: 3px 8px; border-radius: 6px; }
+    .dv-tasa-input { width: 120px !important; padding: 7px 9px !important; font-weight: 700; text-align: right; }
+    .dv-tasa-input.cambiado { border-color: var(--warning); background: #fffbeb; }
+    .dv-meta { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+    .dv-switch { position: relative; width: 38px; height: 22px; display: inline-block; }
+    .dv-switch input { opacity: 0; width: 0; height: 0; }
+    .dv-switch span { position: absolute; inset: 0; background: #cbd5e1; border-radius: 22px; cursor: pointer; transition: .2s; }
+    .dv-switch span::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+    .dv-switch input:checked + span { background: var(--success); }
+    .dv-switch input:checked + span::before { transform: translateX(16px); }
+    .dv-switch input:disabled + span { cursor: not-allowed; opacity: .6; }
+    .dv-resultado { font-size: 24px; font-weight: 800; color: var(--primary-dark); margin-top: 6px; }
+    .dv-hist { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .dv-hist-item { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px; }
+    .dv-hist-item strong { color: var(--text); }
+    .dv-aviso { font-size: 12.5px; background: var(--primary-light); color: var(--primary-dark); border: 1px solid #bae6fd; border-radius: 10px; padding: 10px 14px; margin-bottom: 18px; }
     .form-label { font-size: 12px; font-weight: 700; color: var(--text); }
     .form-label span { color: var(--text-muted); font-weight: 400; font-size: 11px; }
     .form-input, .form-select, .form-textarea {
@@ -420,6 +444,7 @@
   <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></symbol>
   <symbol id="icon-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></symbol>
   <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></symbol>
+  <symbol id="icon-repeat" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></symbol>
   <symbol id="icon-dollar-sign" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></symbol>
   <symbol id="icon-activity" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></symbol>
   <symbol id="icon-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></symbol>
@@ -479,6 +504,10 @@
       <div class="nav-item" data-page="costo-herramientas" onclick="navigate('costo-herramientas')">
         <svg viewBox="0 0 24 24"><use href="#icon-dollar-sign"></use></svg>
         Costo por OPP HERRAMIENTAS
+      </div>
+      <div class="nav-item" data-page="divisas" onclick="navigate('divisas')">
+        <svg viewBox="0 0 24 24"><use href="#icon-repeat"></use></svg>
+        Divisas
       </div>
       <div class="nav-item" data-page="calendario" onclick="navigate('calendario')">
         <svg viewBox="0 0 24 24"><use href="#icon-calendar"></use></svg>
@@ -755,6 +784,51 @@
             </div>
             <div id="opp-tech-list-tool" style="max-height:480px;overflow-y:auto">
               <p style="font-size:12.5px;color:var(--text-muted)">Cargando…</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── PAGE: DIVISAS (tipos de cambio oficiales) ── -->
+      <section class="page" id="page-divisas">
+        <div class="dv-aviso">
+          💱 <strong>Moneda base: Soles (PEN).</strong> El tipo de cambio de cada divisa indica cuántos soles vale 1 unidad.
+          ODN (Comercial) usa estas tasas para convertir automáticamente proformas y contratos al cambiar de moneda, y guarda la tasa aplicada en cada documento.
+        </div>
+        <div class="stats-grid" id="dv-stats"></div>
+        <div class="dv-grid">
+          <div class="card" style="margin-bottom:0">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+              <div>
+                <div class="card-title"><svg viewBox="0 0 24 24"><use href="#icon-repeat"></use></svg> Tipos de cambio</div>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:3px">Edita la tasa y pulsa Guardar. Desactiva una divisa para que ODN deje de ofrecerla.</p>
+              </div>
+              <button type="button" class="btn btn-primary" onclick="abrirModalDivisa()"><svg class="icon"><use href="#icon-plus"></use></svg> Nueva divisa</button>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="dv-tabla">
+                <thead><tr><th>Divisa</th><th style="text-align:right">Soles (S/) por 1 unidad</th><th>Activa en ODN</th><th>Actualizado</th><th></th></tr></thead>
+                <tbody id="dv-tbody"><tr><td colspan="5" style="color:var(--text-muted)">Cargando…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-title"><svg viewBox="0 0 24 24"><use href="#icon-calculator"></use></svg> Convertidor</div>
+              <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+                <div class="form-group"><label for="dv-conv-monto">Monto</label><input type="number" id="dv-conv-monto" value="1000" min="0" step="0.01" oninput="convertirDivisaOpp()"></div>
+                <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end">
+                  <div class="form-group"><label for="dv-conv-de">De</label><select id="dv-conv-de" onchange="convertirDivisaOpp()"></select></div>
+                  <button type="button" class="btn btn-secondary btn-sm" title="Invertir" onclick="invertirConversionOpp()" style="margin-bottom:2px">⇄</button>
+                  <div class="form-group"><label for="dv-conv-a">A</label><select id="dv-conv-a" onchange="convertirDivisaOpp()"></select></div>
+                </div>
+                <div class="dv-resultado" id="dv-conv-resultado">—</div>
+                <div class="dv-meta" id="dv-conv-formula"></div>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:0">
+              <div class="card-title"><svg viewBox="0 0 24 24"><use href="#icon-clock"></use></svg> Historial de cambios</div>
+              <div class="dv-hist" id="dv-historial" style="margin-top:12px"><p class="dv-meta">Cargando…</p></div>
             </div>
           </div>
         </div>
@@ -1276,7 +1350,186 @@ const PAGE_TITLES = {
   'calculadora': { title: 'Simulador Financiero', sub: 'Calculadora de precios, márgenes de ganancia y amortización' },
   'costo-herramientas': { title: 'Costo por OPP HERRAMIENTAS', sub: 'Catálogo de lenguajes y herramientas con costos y márgenes de propuesta' },
   'calendario': { title: 'Calendario Corporativo', sub: 'Agenda de comités de presupuestos y reuniones corporativas' },
+  'divisas': { title: 'Divisas y Tipo de Cambio', sub: 'Tipos de cambio oficiales que usa ODN en proformas y contratos' },
 };
+
+// ══════════════════════════════════════════════════════
+// DIVISAS — OPP define los tipos de cambio que usa ODN
+// ══════════════════════════════════════════════════════
+let _dvLista = [];
+const DV_SUGERIDAS = [
+  ['USD', 'Dólares Americanos', '$'], ['EUR', 'Euros', '€'], ['GBP', 'Libras Esterlinas', '£'], ['CLP', 'Pesos Chilenos', 'CLP$'],
+  ['COP', 'Pesos Colombianos', 'COL$'], ['MXN', 'Pesos Mexicanos', 'MX$'], ['BRL', 'Reales Brasileños', 'R$'], ['ARS', 'Pesos Argentinos', 'AR$'],
+  ['BOB', 'Bolivianos', 'Bs'], ['CAD', 'Dólares Canadienses', 'C$'], ['CHF', 'Francos Suizos', 'CHF'], ['CNY', 'Yuanes Chinos', '¥'], ['JPY', 'Yenes Japoneses', '¥']
+];
+const dvNum = (n, dec = 4) => Number(n).toLocaleString('es-PE', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+const dvFecha = f => f ? new Date(f).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+
+async function cargarDivisasOpp() {
+  try {
+    const data = await oppFetch('/api/divisas?todas=1');
+    _dvLista = data.divisas || [];
+    renderDivisasOpp();
+  } catch (e) {
+    if (e.message === 'SESSION_EXPIRED') return;
+    document.getElementById('dv-tbody').innerHTML = `<tr><td colspan="5" style="color:var(--danger)">No se pudieron cargar las divisas: ${esc(e.message)}</td></tr>`;
+  }
+  cargarHistorialDivisas();
+}
+
+async function cargarHistorialDivisas() {
+  const cont = document.getElementById('dv-historial');
+  try {
+    const { historial } = await oppFetch('/api/divisas/historial');
+    const etiquetas = { alta: 'Alta', tasa: 'Cambio de tasa', activada: 'Activada', desactivada: 'Desactivada', datos: 'Datos editados' };
+    cont.innerHTML = historial.length ? historial.slice(0, 60).map(h => `
+      <div class="dv-hist-item">
+        <strong>${esc(h.codigo)}</strong> · ${esc(etiquetas[h.cambio] || h.cambio)}
+        ${h.cambio === 'tasa' ? `: S/ ${dvNum(h.tasa_anterior)} → <strong>S/ ${dvNum(h.tasa_nueva)}</strong>` : h.cambio === 'alta' ? `: S/ ${dvNum(h.tasa_nueva)}` : ''}
+        <div class="dv-meta">${dvFecha(h.created_at)} · ${esc(h.usuario || '—')}</div>
+      </div>`).join('') : '<p class="dv-meta">Aún no hay cambios registrados.</p>';
+  } catch (e) {
+    if (e.message !== 'SESSION_EXPIRED') cont.innerHTML = `<p class="dv-meta" style="color:var(--danger)">${esc(e.message)}</p>`;
+  }
+}
+
+function renderDivisasOpp() {
+  const activas = _dvLista.filter(d => d.activo && d.codigo !== 'PEN');
+  document.getElementById('dv-stats').innerHTML = activas.slice(0, 4).map(d => `
+    <div class="stat-card">
+      <div class="stat-icon"><svg viewBox="0 0 24 24"><use href="#icon-repeat"></use></svg></div>
+      <div class="stat-info">
+        <div class="num">S/ ${dvNum(d.tasa_pen)}</div>
+        <div class="label">1 ${esc(d.codigo)} (${esc(d.nombre)})</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('dv-tbody').innerHTML = _dvLista.map(d => {
+    const base = d.codigo === 'PEN';
+    return `<tr class="${d.activo ? '' : 'inactiva'}">
+      <td><span class="dv-codigo">${esc(d.codigo)}</span>${base ? ' <span class="badge" style="background:var(--success-light);color:#047857">Base</span>' : ''}<div style="font-weight:600;margin-top:4px">${esc(d.nombre)} <span style="color:var(--text-muted)">(${esc(d.simbolo)})</span></div></td>
+      <td style="text-align:right">${base ? '<strong>1.0000</strong>' : `<input type="number" class="dv-tasa-input" id="dv-tasa-${d.codigo}" value="${d.tasa_pen}" min="0.000001" step="0.0001" oninput="this.classList.toggle('cambiado', Number(this.value) !== ${d.tasa_pen}); document.getElementById('dv-guardar-${d.codigo}').disabled = Number(this.value) === ${d.tasa_pen} || !(Number(this.value) > 0)" onkeydown="if(event.key==='Enter') guardarTasaDivisa('${d.codigo}')"><div class="dv-meta" style="margin-top:3px">S/ 1 = ${dvNum(1 / d.tasa_pen, 6)} ${esc(d.codigo)}</div>`}</td>
+      <td><label class="dv-switch" title="${base ? 'La moneda base siempre está activa' : 'Mostrar esta divisa en proformas y contratos de ODN'}"><input type="checkbox" ${d.activo ? 'checked' : ''} ${base ? 'disabled' : ''} onchange="cambiarEstadoDivisa('${d.codigo}', this.checked)"><span></span></label></td>
+      <td class="dv-meta">${dvFecha(d.updated_at)}<br>${esc(d.actualizado_por || '—')}</td>
+      <td style="white-space:nowrap">${base ? '' : `
+        <button type="button" class="btn btn-primary btn-sm" id="dv-guardar-${d.codigo}" disabled onclick="guardarTasaDivisa('${d.codigo}')">Guardar</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="abrirModalDivisa('${d.codigo}')" title="Editar nombre y símbolo"><svg class="icon" style="width:14px;height:14px"><use href="#icon-edit-2"></use></svg></button>`}
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Convertidor: todas las divisas activas
+  const opciones = _dvLista.filter(d => d.activo).map(d => `<option value="${d.codigo}">${esc(d.codigo)} — ${esc(d.nombre)}</option>`).join('');
+  const de = document.getElementById('dv-conv-de'), a = document.getElementById('dv-conv-a');
+  const vDe = de.value || 'USD', vA = a.value || 'PEN';
+  de.innerHTML = opciones; a.innerHTML = opciones;
+  de.value = _dvLista.some(d => d.codigo === vDe && d.activo) ? vDe : (_dvLista[1]?.codigo || 'PEN');
+  a.value = _dvLista.some(d => d.codigo === vA && d.activo) ? vA : 'PEN';
+  convertirDivisaOpp();
+}
+
+function convertirDivisaOpp() {
+  const monto = Number(document.getElementById('dv-conv-monto').value) || 0;
+  const de = _dvLista.find(d => d.codigo === document.getElementById('dv-conv-de').value);
+  const a = _dvLista.find(d => d.codigo === document.getElementById('dv-conv-a').value);
+  const res = document.getElementById('dv-conv-resultado');
+  const form = document.getElementById('dv-conv-formula');
+  if (!de || !a) { res.textContent = '—'; form.textContent = ''; return; }
+  const valor = monto * Number(de.tasa_pen) / Number(a.tasa_pen);
+  res.textContent = `${a.simbolo} ${dvNum(valor, 2)}`;
+  form.textContent = `${de.simbolo} ${dvNum(monto, 2)} × ${dvNum(de.tasa_pen)} ÷ ${dvNum(a.tasa_pen)} · 1 ${de.codigo} = ${dvNum(Number(de.tasa_pen) / Number(a.tasa_pen))} ${a.codigo}`;
+}
+
+function invertirConversionOpp() {
+  const de = document.getElementById('dv-conv-de'), a = document.getElementById('dv-conv-a');
+  const t = de.value; de.value = a.value; a.value = t;
+  convertirDivisaOpp();
+}
+
+async function guardarDivisaOpp(d, cambios, mensaje) {
+  try {
+    await oppFetch(`/api/divisas/${d.codigo}`, {
+      method: 'PUT',
+      body: JSON.stringify({ nombre: d.nombre, simbolo: d.simbolo, tasa_pen: d.tasa_pen, activo: d.activo, ...cambios }),
+    });
+    toast('success', 'Divisa actualizada', mensaje);
+    await cargarDivisasOpp();
+    return true;
+  } catch (e) {
+    if (e.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo guardar', e.message);
+    return false;
+  }
+}
+
+function guardarTasaDivisa(codigo) {
+  const d = _dvLista.find(x => x.codigo === codigo);
+  const input = document.getElementById('dv-tasa-' + codigo);
+  const tasa = Number(input?.value);
+  if (!d || !(tasa > 0)) { toast('error', 'Tasa inválida', 'Ingresa un número mayor a 0.'); return; }
+  if (tasa === Number(d.tasa_pen)) return;
+  guardarDivisaOpp(d, { tasa_pen: tasa }, `1 ${codigo} = S/ ${dvNum(tasa)} · ODN ya convierte con la nueva tasa.`);
+}
+
+function cambiarEstadoDivisa(codigo, activo) {
+  const d = _dvLista.find(x => x.codigo === codigo);
+  if (!d) return;
+  guardarDivisaOpp(d, { activo }, `${codigo} ${activo ? 'activada: ODN ya puede usarla' : 'desactivada: ODN deja de ofrecerla'}.`);
+}
+
+function abrirModalDivisa(codigo) {
+  const d = codigo ? _dvLista.find(x => x.codigo === codigo) : null;
+  document.getElementById('dv-modal')?.remove();
+  const libres = DV_SUGERIDAS.filter(([c]) => !_dvLista.some(x => x.codigo === c));
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay open';
+  ov.id = 'dv-modal';
+  ov.innerHTML = `
+    <div class="modal-content" style="max-width:520px">
+      <div class="modal-head">
+        <div><h3>${d ? 'Editar divisa ' + esc(d.codigo) : 'Nueva divisa'}</h3><p style="font-size:12px;color:var(--text-muted);margin-top:3px">El tipo de cambio es cuántos soles (S/) vale 1 unidad.</p></div>
+        <button type="button" class="modal-close" onclick="document.getElementById('dv-modal').remove()">×</button>
+      </div>
+      <div class="modal-body">
+        ${d ? '' : `<div class="form-group"><label>Sugerencias</label><div style="display:flex;flex-wrap:wrap;gap:6px">${libres.map(([c, n, sm]) => `<button type="button" class="btn btn-secondary btn-sm" onclick="dvRellenar('${c}','${n}','${sm}')">${c}</button>`).join('') || '<span class="dv-meta">Ya están todas las sugeridas.</span>'}</div></div>`}
+        <div style="display:grid;grid-template-columns:110px 1fr 110px;gap:10px">
+          <div class="form-group"><label for="dv-f-codigo">Código ISO</label><input id="dv-f-codigo" maxlength="3" placeholder="USD" value="${d ? esc(d.codigo) : ''}" ${d ? 'readonly' : ''} style="text-transform:uppercase"></div>
+          <div class="form-group"><label for="dv-f-nombre">Nombre</label><input id="dv-f-nombre" placeholder="Dólares Americanos" value="${d ? esc(d.nombre) : ''}"></div>
+          <div class="form-group"><label for="dv-f-simbolo">Símbolo</label><input id="dv-f-simbolo" maxlength="6" placeholder="$" value="${d ? esc(d.simbolo) : ''}"></div>
+        </div>
+        <div class="form-group"><label for="dv-f-tasa">Soles por 1 unidad</label><input type="number" id="dv-f-tasa" min="0.000001" step="0.0001" placeholder="3.7500" value="${d ? d.tasa_pen : ''}"></div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="dv-f-activo" style="width:auto" ${!d || d.activo ? 'checked' : ''}> Activa: disponible en proformas y contratos de ODN</label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('dv-modal').remove()">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="guardarModalDivisa()">Guardar divisa</button>
+      </div>
+    </div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+  document.getElementById(d ? 'dv-f-nombre' : 'dv-f-codigo').focus();
+}
+
+function dvRellenar(c, n, sm) {
+  document.getElementById('dv-f-codigo').value = c;
+  document.getElementById('dv-f-nombre').value = n;
+  document.getElementById('dv-f-simbolo').value = sm;
+  document.getElementById('dv-f-tasa').focus();
+}
+
+async function guardarModalDivisa() {
+  const codigo = document.getElementById('dv-f-codigo').value.trim().toUpperCase();
+  const nombre = document.getElementById('dv-f-nombre').value.trim();
+  const simbolo = document.getElementById('dv-f-simbolo').value.trim();
+  const tasa = Number(document.getElementById('dv-f-tasa').value);
+  const activo = document.getElementById('dv-f-activo').checked;
+  if (!/^[A-Z]{3}$/.test(codigo)) return toast('error', 'Código inválido', 'Usa el código ISO de 3 letras (ej. USD).');
+  if (!nombre || !simbolo) return toast('error', 'Faltan datos', 'Completa el nombre y el símbolo.');
+  if (!(tasa > 0)) return toast('error', 'Tasa inválida', 'Ingresa cuántos soles vale 1 unidad (mayor a 0).');
+  const existente = _dvLista.find(x => x.codigo === codigo);
+  const ok = await guardarDivisaOpp(existente || { codigo }, { nombre, simbolo, tasa_pen: tasa, activo },
+    `${codigo}: 1 ${codigo} = S/ ${dvNum(tasa)}${activo ? ' · disponible en ODN' : ''}.`);
+  if (ok) document.getElementById('dv-modal')?.remove();
+}
 
 function navigate(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1293,6 +1546,7 @@ function navigate(page) {
 
   if (page === 'calendario') calRender();
   if (page === 'costo-herramientas') loadOppTechCatalog();
+  if (page === 'divisas') cargarDivisasOpp();
 
   if (window.innerWidth <= 900) closeSidebar();
 }
