@@ -1532,6 +1532,7 @@ async function guardarModalDivisa() {
 }
 
 function navigate(page) {
+  if (window.__seccionPrevia !== page) { window.__seccionPrevia = page; window.scrollTo(0, 0); document.querySelectorAll('main, .main, .content, .main-content').forEach(e => { if (e.scrollTop) e.scrollTop = 0; }); } // nueva sección → arriba
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const target = document.getElementById('page-' + page);
   if (target) target.classList.add('active');
