@@ -432,6 +432,7 @@
       .meeting-alert { right: 12px; left: 12px; bottom: 12px; width: auto; max-width: none; }
     }
   </style>
+  <script src="https://api-qubira.onrender.com/api/public/areas.js" defer></script>
 </head>
 <body>
 <svg style="display:none">
@@ -2661,6 +2662,8 @@ async function runSimulation() {
 // ══════════════════════════════════════════════════════
 const CAL_OWN_AREA = 'OPP';
 const CAL_AREAS = [['OPP','OPP'],['ADG','ADG'],['TI','OTI'],['COMERCIAL','Comercial'],['RRHH','ORH']];
+// Áreas desde el catálogo de ORH (fuente única); esta lista queda solo como respaldo
+(window.__qbListasAreas ||= []).push([CAL_AREAS, 'OPP']);
 const CAL_MEETING_TYPES = ['Comité de precios','Revisión financiera','Negociación con Comercial','Presentación de presupuesto','Coordinación con ADG/TI','Otro'];
 const CAL_EXTERNAL_KINDS = [['cliente','Cliente'],['postulante','Postulante'],['proveedor','Proveedor'],['consultor','Consultor'],['otro','Otro']];
 const CAL_STATUS_LABEL = { scheduled:'Programada', confirmed:'Confirmada', in_progress:'En curso', completed:'Finalizada', cancelled:'Cancelada' };
