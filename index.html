@@ -433,6 +433,7 @@
     }
   </style>
   <script src="https://api-qubira.onrender.com/api/public/areas.js" defer></script>
+  <script src="https://api-qubira.onrender.com/api/public/flujo-proyecto.js?v=20261120" defer></script>
 </head>
 <body>
 <svg style="display:none">
@@ -490,6 +491,10 @@
         <svg viewBox="0 0 24 24"><use href="#icon-file-text"></use></svg>
         Por Valorizar
         <span class="nav-badge" id="badge-pending">0</span>
+      </div>
+      <div class="nav-item" data-page="flujo" onclick="navigate('flujo')">
+        <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"></circle><circle cx="6" cy="18" r="2.5"></circle><circle cx="18" cy="12" r="2.5"></circle><path d="M6 8.5v7M8.5 6h3a4 4 0 0 1 4 4v-.5M8.5 18h3a4 4 0 0 0 4-4"></path></svg>
+        Flujo de proyectos
       </div>
       <div class="nav-item" data-page="catalogo-comercial" onclick="navigate('catalogo-comercial')">
         <svg viewBox="0 0 24 24"><use href="#icon-shopping-cart"></use></svg>
@@ -791,6 +796,8 @@
       </section>
 
       <!-- ── PAGE: DIVISAS (tipos de cambio oficiales) ── -->
+      <section class="page" id="page-flujo"><div id="flujo-proyectos"></div></section>
+
       <section class="page" id="page-divisas">
         <div class="dv-aviso">
           💱 <strong>Moneda base: Soles (PEN).</strong> El tipo de cambio de cada divisa indica cuántos soles vale 1 unidad.
@@ -1346,6 +1353,7 @@ setInterval(() => {
 // ── NAVEGACIÓN ──
 const PAGE_TITLES = {
   'dashboard': { title: 'Dashboard Financiero', sub: 'Métricas clave de presupuestos y valorización de proyectos' },
+  'flujo': { title: 'Flujo de proyectos', sub: 'Costo real con alerta de exceso, puerta de Precio y riesgos financieros' },
   'por-valorizar': { title: 'Proyectos por Valorizar', sub: 'Bandeja de proyectos aprobados por ADG que requieren precios' },
   'catalogo-comercial': { title: 'Catálogo para ODN', sub: 'Productos con precios y condiciones asignadas para ODN (Oficina de Desarrollo de Negocios)' },
   'calculadora': { title: 'Simulador Financiero', sub: 'Calculadora de precios, márgenes de ganancia y amortización' },
@@ -1532,6 +1540,15 @@ async function guardarModalDivisa() {
   if (ok) document.getElementById('dv-modal')?.remove();
 }
 
+/* Flujo de proyectos: OPP registra el costo real, fija el precio y lleva riesgos financieros */
+function montarFlujoOPP() {
+  const c = document.getElementById('flujo-proyectos');
+  const dibujar = () => window.qbFlujo.lista(c, { token: () => localStorage.getItem('qopp_token') });
+  if (window.qbFlujo) return dibujar();
+  c.textContent = 'Cargando el flujo de proyectos…';
+  document.addEventListener('qb-flujo-listo', dibujar, { once: true });
+}
+
 function navigate(page) {
   if (window.__seccionPrevia !== page) { window.__seccionPrevia = page; window.scrollTo(0, 0); document.querySelectorAll('main, .main, .content, .main-content').forEach(e => { if (e.scrollTop) e.scrollTop = 0; }); } // nueva sección → arriba
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1549,6 +1566,7 @@ function navigate(page) {
   if (page === 'calendario') calRender();
   if (page === 'costo-herramientas') loadOppTechCatalog();
   if (page === 'divisas') cargarDivisasOpp();
+  if (page === 'flujo') montarFlujoOPP();
 
   if (window.innerWidth <= 900) closeSidebar();
 }
