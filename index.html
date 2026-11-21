@@ -435,6 +435,7 @@
   <script src="https://api-qubira.onrender.com/api/public/areas.js" defer></script>
   <script src="https://api-qubira.onrender.com/api/public/bandeja.js?v=20261120b" defer></script>
   <script src="https://api-qubira.onrender.com/api/public/flujo-proyecto.js?v=20261120" defer></script>
+  <link rel="stylesheet" href="./sidebar.css?v=1">
 </head>
 <body>
 <svg style="display:none">
@@ -473,16 +474,16 @@
   <div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
 
   <!-- ── SIDEBAR ── -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
+  <aside class="sidebar" id="sidebar" data-qb-sidebar="OPP">
+    <div class="sidebar-logo" data-qb-brand>
       <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="QUBIRA">
-      <div>
-        <div class="brand">QUBIRA</div>
-        <div class="sub">OPP · Presupuestos</div>
+      <div data-qb-brand-text>
+        <div class="brand" data-qb-title>QUBIRA</div>
+        <div class="sub" data-qb-subtitle>OPP · Presupuestos</div>
       </div>
     </div>
 
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" data-qb-nav>
       <div class="nav-section">Operaciones</div>
       <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
         <svg viewBox="0 0 24 24"><use href="#icon-layout"></use></svg>
@@ -526,7 +527,7 @@
       </div>
     </nav>
 
-    <div class="sidebar-footer">
+    <div class="sidebar-footer" data-pie-modulo>
       <div class="sidebar-footer-user">
         <div class="sidebar-avatar" id="sf-avatar">OP</div>
         <div style="min-width:0;flex:1">
@@ -535,11 +536,11 @@
         </div>
       </div>
       <div class="sidebar-actions">
-        <a class="sidebar-btn" href="#" id="btn-change-module" title="Ir a Selección de Módulo">
+        <a class="sidebar-btn" href="#" id="btn-change-module" data-pie-cambiar title="Ir a Selección de Módulo">
           <svg class="icon" style="width:13px;height:13px"><use href="#icon-grid"></use></svg>
           Módulos
         </a>
-        <button class="sidebar-btn danger" onclick="logout()" title="Cerrar sesión">Salir</button>
+        <button class="sidebar-btn danger" onclick="logout()" data-pie-salir title="Cerrar sesión">Salir</button>
       </div>
     </div>
   </aside>
@@ -3455,5 +3456,7 @@ function calViewMeeting(id) {
 <!-- Estado del servidor QUBIRA (tiempo encendido y horas de Render) -->
 <script src="https://api-qubira.onrender.com/api/public/estado.js" defer></script>
 <script src="https://api-qubira.onrender.com/api/public/notificaciones.js?v=20261121" data-token="qopp_token" defer></script>
+
+<script src="./pie-modulo.js?v=1" data-token="qopp_token" defer></script>
 </body>
 </html>
